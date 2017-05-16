@@ -123,7 +123,7 @@ public class Main {
             today.setMin(min);
             weatherRepo.setTodayWeather(today); 
         }catch(Exception ex){
-             System.out.println("-------------------8888888888888888888888");
+             System.out.println("Problem gjat ruajtjes te motit ditor lokalisht: "+ex);
         } 
     }
     
@@ -140,7 +140,7 @@ public class Main {
             daily.setMax(max); 
             weatherRepo.setDailyWeather(daily);            
         }catch(Exception ex){
-            System.out.println("-------------------8888888888888888888888");
+            System.out.println("Problem gjat ruajtjes te motit 5 ditor lokalisht: "+ex);
         }
     }
     
