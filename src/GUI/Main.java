@@ -33,6 +33,7 @@ import org.json.JSONObject;
  * @author Aztech.Web
  */
 public class Main {
+    
     Users useri ;
     City city;
     List<Daily> dailyList;
@@ -42,60 +43,50 @@ public class Main {
     Date date = new Date();
     short cond = 1,temp = 10, max = 16, min = 8;
     String day = "E Marte";
-    String URL = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20woeid%3D%22";
-                       
+    String URL = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22pristina%2Crs%22)%20%20and%20u%3D%22c%22&format=json&diagnostics=true&env=store%3A%2F%2Falltableswithkeys";
+                 
     
-    //Mer te dhenat e motit lokalisht
-    private void getWeatherLocaly(){ 
-        try {
-        today = weatherRepo.getWeather(city,date);
-        dailyList = weatherRepo.getDailyWeather(city,date);
-        clearCache();
-        getWeatherOnline();
-        } catch (Exceptions ex) {
-         System.out.println("Get Weather Localy Error: "+ex);
-        }
-    }
-    
-
-    
-    
-    //Fshij te gjitha te dhenat e motit te ruajtura lokalisht per qytetin e perdoruesit
-    private void clearCache(){
-        try {
-        //Fshij te dhenat per javen e ardhshme ne databazen lokale (nese ka), dhe shto te rejat
-        weatherRepo.clearDailyWeather(city);
-        
-        //Fshij te dhenat per diten e sotme ne databazen lokale (nese ka), dhe shto te rejat
-        weatherRepo.clearTodayWeather(city);
-        
-        } catch (Exceptions ex) {
-             System.out.println("Clear Cache: "+ex);
-        }
-    }
-    
-    
-    
-    
-    //Mer te dhenat e motit nga YahooWeather dhe ruaj ato lokalisht
-    private void getWeatherOnline(){ 
+    public static void main(String [] args) {            
         try{
-            JSONObject yahooWeather = weatherRepo.getYahooWeather(URL);
-            parseJsonFeed(yahooWeather);
-        }catch(IOException | JSONException e){
-            System.out.println("Get Weather Online Error: "+e);
+            new Main().checkUser();
+        }catch(Exception e){
+            System.out.println(e.getMessage());
         }
     }
-
+ 
     
-   //Kontrollo nese perdoruesi egziston 
+    /*
+    *
+    *METODAT PER 
+    * 1)    Validimin e perdoruesit
+    * 2)    Perkthim 
+    * 3)    Pastrim i databazes
+    * 4)    Marrja e te dhenave lokalisht
+    * 5)    Marrja e te dhenave Online
+    * 6)    Ruajtja e motit lokalisht
+    * 7)    Shfaqja e te dhenave tek perdoruesi
+    */
+    
+    //1)
+    private boolean hasSpaces(String s){
+    //kontrollo per hapsira    
+    Pattern pattern = Pattern.compile("\\s");
+    Matcher matcher = pattern.matcher(s);
+    return  matcher.find();
+    }
+    private boolean hasSpecialChars(String s){
+    //kontrollo per cdo karakter tjeter perveq A-Z, 0-9 dhe . (pika)
+        //nuk ka rendesi nese karakteret jane shkronja te medha ose te vogla (CASE_INSENSITIVE)
+    Pattern p = Pattern.compile("[^a-z0-9. ]", Pattern.CASE_INSENSITIVE);
+    Matcher m = p.matcher(s);
+    return  m.find();
+    }
+    //Kontrollo nese perdoruesi egziston 
     private void checkUser() throws Exception{           
       try{
           UsersRepository repo = new UsersRepository();          
           useri = repo.getUser("doni","123456"); 
           city = useri.getCityId();
-          city.setZip(53615);
-          setZipOfCity();
           //Nese perdoruesi ka te caktuar qytetin vazhdo me pjesen e motit 
           if(city.getId()>0)
             getWeatherLocaly();
@@ -105,126 +96,9 @@ public class Main {
           throw new Exception(e);
       }
     }
-    private void setZipOfCity(){
-        URL = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22pristina%2Crs%22)%20%20and%20u%3D%22c%22&format=json&diagnostics=true&env=store%3A%2F%2Falltableswithkeys";
-    }
     
     
-    public static void main(String [] args) {            
-        try{
-            new Main().checkUser();
-        }catch(Exception e){
-            System.out.println(e.getMessage());
-        }
-    }
-    
-    
-    
-    
-    
-    
-    
-    /**
-     * Ruajtja e motit lokalisht
-     */
-    
-    //Shto ne databazen lokale te dhenat e motit per diten e sotme
-    private void updateTodayWeatherInLocalhost(String day, Date date, short cond, short current){
-        try{           
-            Today today = new Today();
-            today.setCityId(city);
-            today.setDay(day);
-            today.setDate(date);
-            today.setCond(cond);
-            today.setCurrent(current);
-            weatherRepo.setTodayWeather(today); 
-        }catch(Exception ex){
-             System.out.println("Problem gjat ruajtjes te motit ditor lokalisht: "+ex);
-        } 
-    }
-    
-    
-    //Shto ne databazen lokale te dhenat e motit per ditet ne vijim
-    private void updateDailyWeatherInLocalhost(Date date, String day,short cond, short max, short min){    
-        try{    
-            Daily dailyThisDay = new Daily();
-            dailyThisDay.setCityId(city);
-            dailyThisDay.setDate(date);
-            dailyThisDay.setDay(day);
-            dailyThisDay.setCond(cond);
-            dailyThisDay.setMin(min);
-            dailyThisDay.setMax(max); 
-            weatherRepo.setDailyWeather(dailyThisDay); 
-        }catch(Exception ex){
-            System.out.println("Problem gjat ruajtjes te motit 5 ditor lokalisht: "+ex);
-        }
-    }
-    
-    
-    
-   
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    /**
-     *Funksionet per kontrollimin e stringjeve dhe te tjera
-     */
-   private boolean hasSpaces(String s){
-    //kontrollo per hapsira    
-    Pattern pattern = Pattern.compile("\\s");
-    Matcher matcher = pattern.matcher(s);
-    return  matcher.find();
-    }
-    
-    private boolean hasSpecialChars(String s){
-    //kontrollo per cdo karakter tjeter perveq A-Z, 0-9 dhe . (pika)
-        //nuk ka rendesi nese karakteret jane shkronja te medha ose te vogla (CASE_INSENSITIVE)
-    Pattern p = Pattern.compile("[^a-z0-9. ]", Pattern.CASE_INSENSITIVE);
-    Matcher m = p.matcher(s);
-    return  m.find();
-    } 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    /***
-     * Metodat per rregullimin e motit
-     */
-    
+    //2)
     //Perkthe emrin e dites
     private static String setDay(String Day){      
         if (Day.equals("Mon")) 
@@ -245,14 +119,48 @@ public class Main {
     }
     
     
+    //3)
+    //Fshij te gjitha te dhenat e motit te ruajtura lokalisht per qytetin e perdoruesit
+    private void clearCache(){
+        try {
+        //Fshij te dhenat per javen e ardhshme ne databazen lokale (nese ka), dhe shto te rejat
+        weatherRepo.clearDailyWeather(city);
+        
+        //Fshij te dhenat per diten e sotme ne databazen lokale (nese ka), dhe shto te rejat
+        weatherRepo.clearTodayWeather(city);
+        
+        } catch (Exceptions ex) {
+             System.out.println("Clear Cache: "+ex);
+        }
+    }
     
     
+    //4)
+    //Mer te dhenat e motit lokalisht
+    private void getWeatherLocaly(){ 
+        try {
+        today = weatherRepo.getWeather(city,date);
+        dailyList = weatherRepo.getDailyWeather(city,date);
+        getWeatherOnline();
+        } catch (Exceptions ex) {
+         System.out.println("Get Weather Localy Error: "+ex);
+        }
+    }
     
+    //5) 
+    //Mer te dhenat e motit nga YahooWeather dhe ruaj ato lokalisht
+    private void getWeatherOnline(){ 
+        try{
+            JSONObject yahooWeather = weatherRepo.getYahooWeather(URL);
+            parseJsonFeed(yahooWeather);
+        }catch(IOException | JSONException e){
+            System.out.println("Get Weather Online Error: "+e);
+        }
+    }
+    //Kthe nga JSON Objekt ne te dhena te gatshme per paraqitje dhe ruajtje
     private void parseJsonFeed(JSONObject response) {
         //Pastro databazen lokale nga te dhenat e motit
         clearCache();
-        
-        
          /***Moti i sotem
           * @param df Formati i dates e cila do kthehet nga String ne Date 
           * @param currentWind Shpejtesia e eres per momentin
@@ -277,9 +185,6 @@ public class Main {
          Date dailyDate;
          String dailyDay;
          short dailyCondition, dailyMax, dailyMin;
-         
-
-         
         /**
          * @alias Today 
          * 
@@ -290,8 +195,6 @@ public class Main {
          * @param currentCondition  =   kushtet atmosferike
          */ 
         try {
-            
-            
             /***
              * Moti i sotem
              */
@@ -302,22 +205,18 @@ public class Main {
                     .getJSONObject("item")
                     .getJSONObject("condition")
                     .getInt("temp");
-           
             currentWind = response
                     .getJSONObject("query")
                     .getJSONObject("results")
                     .getJSONObject("channel")
                     .getJSONObject("wind")
                     .getString("speed");                    
-                    
-            
             currentDay = response
                     .getJSONObject("query")
                     .getJSONObject("results")
                     .getJSONObject("channel")
                     .getString("lastBuildDate");
             currentDay = setDay(currentDay.substring(0, 3));
-            
             cDate = response
                     .getJSONObject("query")
                     .getJSONObject("results")
@@ -325,7 +224,6 @@ public class Main {
                     .getString("lastBuildDate");
             cDate = cDate.substring(5,16); 
             currentDate = df.parse(cDate);
-            
             currentCondition = response
                     .getJSONObject("query")
                     .getJSONObject("results")
@@ -333,12 +231,6 @@ public class Main {
                     .getJSONObject("item")
                     .getJSONObject("condition")
                     .getInt("code");   
-            
-            
-            
-            
-            
-            
             //Deklaro vargun dailyWeather i cili permbane motin per 5 ditet ne vijim
             JSONArray dailyWeather = response
                     .getJSONObject("query")
@@ -349,7 +241,6 @@ public class Main {
             
             //mer 5 elementet e para te vargut [5 ditet e motit] 
             for (int i = 0; i < 5; i++) {
-                
                 //Mer te dhenat e motit nga vargu specifikisht per diten e dhene [i]
                 // nese i=0, mer te dhenat e motit per diten e pare (sot)
                 // nese i=1, mer te dhenat e motit per diten e dyte (neser)
@@ -360,15 +251,10 @@ public class Main {
                 dailyCondition = (short) getDailyWeatherByDay.getInt("code");
                 dailyMax = (short) getDailyWeatherByDay.getInt("high");
                 dailyMin = (short) getDailyWeatherByDay.getInt("low");
-                    
-                
                   
                 updateDailyWeatherInLocalhost(dailyDate, dailyDay, dailyCondition, dailyMax, dailyMin);
                 setDailyWeather(dailyDate,dailyDay,dailyCondition,dailyMax,dailyMin,i);
             }
-            
-            
-
             
             //Ruaj te dhenat e motit lokalisht
             updateTodayWeatherInLocalhost(currentDay,
@@ -376,15 +262,45 @@ public class Main {
                                             (short) currentCondition,
                                             (short) currentTemp);
             
-            
         }catch(Exception e){
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, e);
         }
-              
-        
     }
     
     
+    //6)
+    //Shto ne databazen lokale te dhenat e motit per diten e sotme
+    private void updateTodayWeatherInLocalhost(String day, Date date, short cond, short current){
+        try{           
+            Today today = new Today();
+            today.setCityId(city);
+            today.setDay(day);
+            today.setDate(date);
+            today.setCond(cond);
+            today.setCurrent(current);
+            weatherRepo.setTodayWeather(today); 
+        }catch(Exception ex){
+             System.out.println("Problem gjat ruajtjes te motit ditor lokalisht: "+ex);
+        } 
+    }
+    //Shto ne databazen lokale te dhenat e motit per ditet ne vijim
+    private void updateDailyWeatherInLocalhost(Date date, String day,short cond, short max, short min){    
+        try{    
+            Daily dailyThisDay = new Daily();
+            dailyThisDay.setCityId(city);
+            dailyThisDay.setDate(date);
+            dailyThisDay.setDay(day);
+            dailyThisDay.setCond(cond);
+            dailyThisDay.setMin(min);
+            dailyThisDay.setMax(max); 
+            weatherRepo.setDailyWeather(dailyThisDay); 
+        }catch(Exception ex){
+            System.out.println("Problem gjat ruajtjes te motit 5 ditor lokalisht: "+ex);
+        }
+    }
+    
+    
+    //7)
     private void setDailyWeather(Date dailyDate,String dailyDay,short dailyCondition,short dailyMax,short dailyMin,int i) {
             switch (i){
                 case 0:
@@ -419,9 +335,6 @@ public class Main {
                     break;
                 default:
                     break;
-                }
+        }
     }
-
-    
-    
 }
