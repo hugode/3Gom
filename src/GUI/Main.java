@@ -13,10 +13,19 @@ import BL.Users;
 import DAL.Exceptions;
 import DAL.UsersRepository;
 import DAL.WeatherRepository;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 /**
@@ -31,7 +40,7 @@ public class Main {
     Daily daily = new Daily();
     WeatherRepository weatherRepo = new WeatherRepository();
     Date date = new Date();
-    short cond = 1, max = 16, min = 8;
+    short cond = 1,temp = 10, max = 16, min = 8;
     String day = "E Marte";
     String URL = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20woeid%3D%22";
                        
@@ -71,17 +80,11 @@ public class Main {
     //Mer te dhenat e motit nga YahooWeather dhe ruaj ato lokalisht
     private void getWeatherOnline(){ 
         try{
-            //weatherRepo.getYahooWeather(URL);
-        }catch(Exception e){
-            System.out.println(e+"-----88888888888----------");
+            JSONObject yahooWeather = weatherRepo.getYahooWeather(URL);
+            parseJsonFeed(yahooWeather);
+        }catch(IOException | JSONException e){
+            System.out.println("Get Weather Online Error: "+e);
         }
-        
-        
-        
-    //nese te dhenat online jane te gatshem vazhdo me shtimin e te dhenave online 
-    updateTodayWeatherInLocalhost(day,date,cond,max,min);
-    for(int i=0;i<5;i++)
-            updateDailyWeatherInLocalhost(day,date,cond,max,min);
     }
 
     
@@ -103,8 +106,7 @@ public class Main {
       }
     }
     private void setZipOfCity(){
-        URL += city.getZip()+
-        "%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
+        URL = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22pristina%2Crs%22)%20%20and%20u%3D%22c%22&format=json&diagnostics=true&env=store%3A%2F%2Falltableswithkeys";
     }
     
     
@@ -127,15 +129,14 @@ public class Main {
      */
     
     //Shto ne databazen lokale te dhenat e motit per diten e sotme
-    private void updateTodayWeatherInLocalhost(String day, Date date, short cond, short max, short min){
+    private void updateTodayWeatherInLocalhost(String day, Date date, short cond, short current){
         try{           
             Today today = new Today();
             today.setCityId(city);
             today.setDay(day);
             today.setDate(date);
             today.setCond(cond);
-            today.setMax(max);
-            today.setMin(min);
+            today.setCurrent(current);
             weatherRepo.setTodayWeather(today); 
         }catch(Exception ex){
              System.out.println("Problem gjat ruajtjes te motit ditor lokalisht: "+ex);
@@ -144,20 +145,37 @@ public class Main {
     
     
     //Shto ne databazen lokale te dhenat e motit per ditet ne vijim
-    private void updateDailyWeatherInLocalhost(String day,Date date,  short cond, short min, short max){    
+    private void updateDailyWeatherInLocalhost(Date date, String day,short cond, short max, short min){    
         try{    
-            Daily daily = new Daily();
-            daily.setCityId(city);
-            daily.setDate(date);
-            daily.setDay(day);
-            daily.setCond(cond);
-            daily.setMin(min);
-            daily.setMax(max); 
-            weatherRepo.setDailyWeather(daily);            
+            Daily dailyThisDay = new Daily();
+            dailyThisDay.setCityId(city);
+            dailyThisDay.setDate(date);
+            dailyThisDay.setDay(day);
+            dailyThisDay.setCond(cond);
+            dailyThisDay.setMin(min);
+            dailyThisDay.setMax(max); 
+            weatherRepo.setDailyWeather(dailyThisDay); 
         }catch(Exception ex){
             System.out.println("Problem gjat ruajtjes te motit 5 ditor lokalisht: "+ex);
         }
     }
+    
+    
+    
+   
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     
@@ -180,5 +198,230 @@ public class Main {
     Matcher m = p.matcher(s);
     return  m.find();
     } 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /***
+     * Metodat per rregullimin e motit
+     */
+    
+    //Perkthe emrin e dites
+    private static String setDay(String Day){      
+        if (Day.equals("Mon")) 
+                return "E Hene";
+         else if (Day.equals("Tue")) 
+                return "E Marte";
+         else if (Day.equals("Wed")) 
+                return "E Merkure";
+         else if (Day.equals("Thu")) 
+                return "E Enjete";
+         else if (Day.equals("Fri")) 
+                return "E Premte";
+         else if (Day.equals("Sat")) 
+                return "E Shtunë";
+         else if (Day.equals("Sun")) 
+                return "E Diel";
+        return null;        
+    }
+    
+    
+    
+    
+    
+    private void parseJsonFeed(JSONObject response) {
+        //Pastro databazen lokale nga te dhenat e motit
+        clearCache();
+        
+        
+         /***Moti i sotem
+          * @param df Formati i dates e cila do kthehet nga String ne Date 
+          * @param currentWind Shpejtesia e eres per momentin
+          * @param currentDay Emri i dites se sotme 
+          * @param cDate String qe mbane daten e sotme per tu konvertuar ne Date() currentDate
+          * @param currentDate Data e sotme
+          * @param currentCondition Kushtet e motit per momentin [(0-47) kushtet aktuale, (3200) not available]
+          * 
+          */  
+         DateFormat df = new SimpleDateFormat("dd MMMM yyyy");
+         String currentWind, currentDay , cDate;
+         Date currentDate;
+         int currentCondition, currentTemp;
+         
+         /***Moti ditor
+          * @param dailyDate Data e dites se dhene
+          * @param dailyDay Emri i dites se dhene
+          * @param dailyCondition Kushtet e motit per diten e dhen
+          * @param dailyMax Temperatura maksimale per diten e dhene
+          * @param dailyMin Temperatura minimale per diten e dhene
+          */
+         Date dailyDate;
+         String dailyDay;
+         short dailyCondition, dailyMax, dailyMin;
+         
+
+         
+        /**
+         * @alias Today 
+         * 
+         * Perditeso motin momental
+         * @param currentTemp       =   temperatura momentale
+         * @param currentWind       =   shpejtesia e eres per momentin
+         * @param currentDay        =   emri i dites se sotme
+         * @param currentCondition  =   kushtet atmosferike
+         */ 
+        try {
+            
+            
+            /***
+             * Moti i sotem
+             */
+           currentTemp = response
+                    .getJSONObject("query")
+                    .getJSONObject("results")
+                    .getJSONObject("channel")
+                    .getJSONObject("item")
+                    .getJSONObject("condition")
+                    .getInt("temp");
+           
+            currentWind = response
+                    .getJSONObject("query")
+                    .getJSONObject("results")
+                    .getJSONObject("channel")
+                    .getJSONObject("wind")
+                    .getString("speed");                    
+                    
+            
+            currentDay = response
+                    .getJSONObject("query")
+                    .getJSONObject("results")
+                    .getJSONObject("channel")
+                    .getString("lastBuildDate");
+            currentDay = setDay(currentDay.substring(0, 3));
+            
+            cDate = response
+                    .getJSONObject("query")
+                    .getJSONObject("results")
+                    .getJSONObject("channel")
+                    .getString("lastBuildDate");
+            cDate = cDate.substring(5,16); 
+            currentDate = df.parse(cDate);
+            
+            currentCondition = response
+                    .getJSONObject("query")
+                    .getJSONObject("results")
+                    .getJSONObject("channel")
+                    .getJSONObject("item")
+                    .getJSONObject("condition")
+                    .getInt("code");   
+            
+            
+            
+            
+            
+            
+            //Deklaro vargun dailyWeather i cili permbane motin per 5 ditet ne vijim
+            JSONArray dailyWeather = response
+                    .getJSONObject("query")
+                    .getJSONObject("results")
+                    .getJSONObject("channel")
+                    .getJSONObject("item")
+                    .getJSONArray("forecast");
+            
+            //mer 5 elementet e para te vargut [5 ditet e motit] 
+            for (int i = 0; i < 5; i++) {
+                
+                //Mer te dhenat e motit nga vargu specifikisht per diten e dhene [i]
+                // nese i=0, mer te dhenat e motit per diten e pare (sot)
+                // nese i=1, mer te dhenat e motit per diten e dyte (neser)
+                JSONObject getDailyWeatherByDay = (JSONObject) dailyWeather.get(i);
+
+                dailyDate = df.parse(getDailyWeatherByDay.getString("date"));
+                dailyDay = setDay(getDailyWeatherByDay.getString("day"));
+                dailyCondition = (short) getDailyWeatherByDay.getInt("code");
+                dailyMax = (short) getDailyWeatherByDay.getInt("high");
+                dailyMin = (short) getDailyWeatherByDay.getInt("low");
+                    
+                
+                  
+                updateDailyWeatherInLocalhost(dailyDate, dailyDay, dailyCondition, dailyMax, dailyMin);
+                setDailyWeather(dailyDate,dailyDay,dailyCondition,dailyMax,dailyMin,i);
+            }
+            
+            
+
+            
+            //Ruaj te dhenat e motit lokalisht
+            updateTodayWeatherInLocalhost(currentDay,
+                                            currentDate,
+                                            (short) currentCondition,
+                                            (short) currentTemp);
+            
+            
+        }catch(Exception e){
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, e);
+        }
+              
+        
+    }
+    
+    
+    private void setDailyWeather(Date dailyDate,String dailyDay,short dailyCondition,short dailyMax,short dailyMin,int i) {
+            switch (i){
+                case 0:
+                    /*day0.setText(Day);
+                    day0Min.setText(feedObj.getString("low"));
+                    day0Max.setText(feedObj.getString("high"));
+                    setIcon(i, code);*/
+                    break;
+                case 1:
+                    /*day1.setText(Day);
+                    day1Min.setText(feedObj.getString("low"));
+                    day1Max.setText(feedObj.getString("high"));
+                    setIcon(i, code);*/
+                    break;
+                case 2:
+                    /* day2.setText(Day);
+                    day2Min.setText(feedObj.getString("low"));
+                    day2Max.setText(feedObj.getString("high"));
+                    setIcon(i, code);*/
+                    break;
+                case 3:
+                    /*day3.setText(Day);
+                    day3Min.setText(feedObj.getString("low"));
+                    day3Max.setText(feedObj.getString("high"));
+                    setIcon(i, code);*/
+                    break;
+                case 4:
+                    /* day4.setText(Day);
+                    day4Min.setText(feedObj.getString("low"));
+                    day4Max.setText(feedObj.getString("high"));
+                    setIcon(i, code);/*/
+                    break;
+                default:
+                    break;
+                }
+    }
+
+    
     
 }

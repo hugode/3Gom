@@ -113,14 +113,6 @@ public class WeatherRepository extends EntityManagerClass{
         }
         
         
-        
-        
-        
-        
-        
-
-        
-
         /*
         *Mer motin Online bazuar ne URL
         */

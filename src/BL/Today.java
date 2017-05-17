@@ -35,8 +35,7 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "Today.findByDay", query = "SELECT t FROM Today t WHERE t.day = :day"),
     @NamedQuery(name = "Today.findByDate", query = "SELECT t FROM Today t WHERE t.date = :date"),
     @NamedQuery(name = "Today.findByCond", query = "SELECT t FROM Today t WHERE t.cond = :cond"),
-    @NamedQuery(name = "Today.findByMax", query = "SELECT t FROM Today t WHERE t.max = :max"),
-    @NamedQuery(name = "Today.findByMin", query = "SELECT t FROM Today t WHERE t.min = :min")})
+    @NamedQuery(name = "Today.findByCurrent", query = "SELECT t FROM Today t WHERE t.current = :current")})
 public class Today implements Serializable {
     private static final long serialVersionUID = 1L;
     @Id
@@ -51,10 +50,8 @@ public class Today implements Serializable {
     private Date date;
     @Column(name = "cond")
     private Short cond;
-    @Column(name = "max")
-    private Short max;
-    @Column(name = "min")
-    private Short min;
+    @Column(name = "current")
+    private Short current;
     @JoinColumn(name = "city_id", referencedColumnName = "id")
     @ManyToOne
     private City cityId;
@@ -98,20 +95,12 @@ public class Today implements Serializable {
         this.cond = cond;
     }
 
-    public Short getMax() {
-        return max;
+    public Short getCurrent() {
+        return current;
     }
 
-    public void setMax(Short max) {
-        this.max = max;
-    }
-
-    public Short getMin() {
-        return min;
-    }
-
-    public void setMin(Short min) {
-        this.min = min;
+    public void setCurrent(Short current) {
+        this.current = current;
     }
 
     public City getCityId() {
