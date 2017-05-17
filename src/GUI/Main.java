@@ -33,10 +33,11 @@ public class Main {
     Date date = new Date();
     short cond = 1, max = 16, min = 8;
     String day = "E Marte";
-    
+    String URL = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20woeid%3D%22";
+                       
     
     //Mer te dhenat e motit lokalisht
-    private void getWeatherLocaly(){  
+    private void getWeatherLocaly(){ 
         try {
         today = weatherRepo.getWeather(city,date);
         dailyList = weatherRepo.getDailyWeather(city,date);
@@ -47,7 +48,7 @@ public class Main {
         }
     }
     
-    
+
     
     
     //Fshij te gjitha te dhenat e motit te ruajtura lokalisht per qytetin e perdoruesit
@@ -69,6 +70,14 @@ public class Main {
     
     //Mer te dhenat e motit nga YahooWeather dhe ruaj ato lokalisht
     private void getWeatherOnline(){ 
+        try{
+            //weatherRepo.getYahooWeather(URL);
+        }catch(Exception e){
+            System.out.println(e+"-----88888888888----------");
+        }
+        
+        
+        
     //nese te dhenat online jane te gatshem vazhdo me shtimin e te dhenave online 
     updateTodayWeatherInLocalhost(day,date,cond,max,min);
     for(int i=0;i<5;i++)
@@ -82,7 +91,8 @@ public class Main {
           UsersRepository repo = new UsersRepository();          
           useri = repo.getUser("doni","123456"); 
           city = useri.getCityId();
-
+          city.setZip(53615);
+          setZipOfCity();
           //Nese perdoruesi ka te caktuar qytetin vazhdo me pjesen e motit 
           if(city.getId()>0)
             getWeatherLocaly();
@@ -92,6 +102,11 @@ public class Main {
           throw new Exception(e);
       }
     }
+    private void setZipOfCity(){
+        URL += city.getZip()+
+        "%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
+    }
+    
     
     public static void main(String [] args) {            
         try{

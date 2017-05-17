@@ -8,11 +8,18 @@ package DAL;
 import BL.City;
 import BL.Daily;
 import BL.Today;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.List;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
-
+import org.json.*;
 /**
  *
  * @author Aztech.Web
@@ -31,8 +38,9 @@ public class WeatherRepository extends EntityManagerClass{
             
             return (Today) query.getSingleResult();
         } catch (NoResultException e) {
-            throw new Exceptions("Nuk ka te ruajtuar te dhena per diten e sotme lokalisht");
+            System.out.println("Nuk ka te ruajtuar te dhena per diten e sotme lokalisht");
         }
+        return null;
         }
         
         //Me te dhenat e motit per 5 ditet ne vijim duke u bazuar ne qytetin e perdoruesit dhe daten e sotme
@@ -46,8 +54,9 @@ public class WeatherRepository extends EntityManagerClass{
         try{
         return query.getResultList();
         }catch(NoResultException e){
-            throw new Exceptions("Nuk ka te ruajtur te dhena per 5 ditet ne vijim lokalisht");
+            System.out.println("Nuk ka te ruajtur te dhena per 5 ditet ne vijim lokalisht");
         }
+        return null;
         }
         
         
@@ -85,8 +94,7 @@ public class WeatherRepository extends EntityManagerClass{
             query.executeUpdate();
             em.getTransaction().commit();
             }catch(Exception e){
-                System.out.println(e);
-                throw new Exceptions(e.getMessage()+"--------------888888888888888");
+                throw new Exceptions("Problem me fshirjen e motit te sotem lokalisht: "+e.getMessage());
             }
         }
         
@@ -100,8 +108,57 @@ public class WeatherRepository extends EntityManagerClass{
             em.getTransaction().commit();
             }catch(Exception e){
                 System.out.println(e);
-                throw new Exceptions(e.getMessage()+"--------------888888888888888");
+                throw new Exceptions("Problem me fshirjen e motit ditor lokalisht: "+e.getMessage());
             }
         }
+        
+        
+        
+        
+        
+        
+        
+
+        
+
+        /*
+        *Mer motin Online bazuar ne URL
+        */
+        //Kthe JSON Objektin nga URL e dhene
+        public static JSONObject getYahooWeather(String url) throws IOException, JSONException {
+            //Lexo te dhenat qe paraqiten ne URL e dhene dhe ruaj si InputStream objekt
+            InputStream is = new URL(url).openStream();
+            try {
+                //Lexo tekstin nga InputStream, dhe ktheje ate ne BufferedReader
+                //ne menyre qe te lexohen karakteret , vargjet(arrays) dhe rreshtat ne forme sa me efikase
+                BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
+                
+                //Stringut jsonText vendosja te gjithe rreshtat qe ka BufferedReader 'rd'
+                //perdoret metoda readAll() <line 148>
+                String jsonText = readAll(rd);
+                
+                //Krijo nje JSONObject nga Stringu i dhene
+                JSONObject json = new JSONObject(jsonText);
+                return json;
+            } finally {
+                //Mbyll InputStream
+                is.close();
+            }
+        }
+        //Kthe BufferedReader ne String
+        private static String readAll(Reader rd) throws IOException {
+            
+            StringBuilder sb = new StringBuilder();
+            int cp;
+            
+            //Perderisa ka karaktere per lexim vazhdo shtimin ne StringBuilder te rreshtit
+            // ne momentin kur nuk ka me shume karaktere, del nga while loop sepse paraqet -1
+            while ((cp = rd.read()) != -1) {
+                sb.append((char) cp);
+            }
+            //Kthe karakteret si String
+            return sb.toString();
+        }
+        
         
 }
