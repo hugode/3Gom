@@ -39,12 +39,17 @@ public class Main {
     List<Daily> dailyList;
     Today today = new Today();
     Daily daily = new Daily();
+    UsersRepository userRepo = new UsersRepository();
     WeatherRepository weatherRepo = new WeatherRepository();
     Date date = new Date();
     short cond = 1,temp = 10, max = 16, min = 8;
     String day = "E Marte";
-    String URL = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22pristina%2Crs%22)%20%20and%20u%3D%22c%22&format=json&diagnostics=true&env=store%3A%2F%2Falltableswithkeys";
-                 
+    //Pjesa e pare e url [hosti]
+    final String URL_HOST = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20woeid%20%3D%22";             
+    //Pjesa e fundit e url [tipi i te dhenave / njesia matese (celsious)]
+    final String URL_FOOTER = "%22)%20and%20u%3D%22c%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
+    //URL eshte bashkim i URL_HOST + cityZip + URL_FOOTER
+    String URL;
     
     public static void main(String [] args) {            
         try{
@@ -56,18 +61,19 @@ public class Main {
  
     
     /*
-    *
-    *METODAT PER 
-    * 1)    Validimin e perdoruesit
+    *METODAT:
+    * 1)    Validimi i perdoruesit
     * 2)    Perkthim 
     * 3)    Pastrim i databazes
     * 4)    Marrja e te dhenave lokalisht
     * 5)    Marrja e te dhenave Online
     * 6)    Ruajtja e motit lokalisht
     * 7)    Shfaqja e te dhenave tek perdoruesi
+    * 8)    Shfaqja e ikones
+    * 9)    Ndryshimi i prapavise
     */
     
-    //1)
+    //1)    Validimi i perdoruesit
     private boolean hasSpaces(String s){
     //kontrollo per hapsira    
     Pattern pattern = Pattern.compile("\\s");
@@ -84,8 +90,8 @@ public class Main {
     //Kontrollo nese perdoruesi egziston 
     private void checkUser() throws Exception{           
       try{
-          UsersRepository repo = new UsersRepository();          
-          useri = repo.getUser("doni","123456"); 
+                    
+          useri = userRepo.getUser("doni","123456"); 
           city = useri.getCityId();
           //Nese perdoruesi ka te caktuar qytetin vazhdo me pjesen e motit 
           if(city.getId()>0)
@@ -98,28 +104,30 @@ public class Main {
     }
     
     
-    //2)
+    //2)    Perkthim
     //Perkthe emrin e dites
     private static String setDay(String Day){      
-        if (Day.equals("Mon")) 
+        switch (Day) { 
+            case "Mon":
                 return "E Hene";
-         else if (Day.equals("Tue")) 
+            case "Tue": 
                 return "E Marte";
-         else if (Day.equals("Wed")) 
+            case "Wed": 
                 return "E Merkure";
-         else if (Day.equals("Thu")) 
+            case "Thu": 
                 return "E Enjete";
-         else if (Day.equals("Fri")) 
+            case "Fri": 
                 return "E Premte";
-         else if (Day.equals("Sat")) 
+            case "Sat": 
                 return "E Shtunë";
-         else if (Day.equals("Sun")) 
+            case "Sun": 
                 return "E Diel";
+        }
         return null;        
     }
     
     
-    //3)
+    //3)    Pastrim i databazes
     //Fshij te gjitha te dhenat e motit te ruajtura lokalisht per qytetin e perdoruesit
     private void clearCache(){
         try {
@@ -135,7 +143,7 @@ public class Main {
     }
     
     
-    //4)
+    //4)    Marrja e te dhenave lokalisht
     //Mer te dhenat e motit lokalisht
     private void getWeatherLocaly(){ 
         try {
@@ -147,9 +155,11 @@ public class Main {
         }
     }
     
-    //5) 
+    //5)    Marrja e te dhenave Online 
     //Mer te dhenat e motit nga YahooWeather dhe ruaj ato lokalisht
     private void getWeatherOnline(){ 
+        //Bashko hostin e URL me ID te qytetit dhe ne fund shto edhe konfigurimet [moti te kthehet si JSON Object]
+        URL = URL_HOST + city.getZip() + URL_FOOTER; 
         try{
             JSONObject yahooWeather = weatherRepo.getYahooWeather(URL);
             parseJsonFeed(yahooWeather);
@@ -159,8 +169,10 @@ public class Main {
     }
     //Kthe nga JSON Objekt ne te dhena te gatshme per paraqitje dhe ruajtje
     private void parseJsonFeed(JSONObject response) {
-        //Pastro databazen lokale nga te dhenat e motit
-        clearCache();
+         //Pastro databazen lokale nga te dhenat e motit
+         clearCache();
+        
+        
          /***Moti i sotem
           * @param df Formati i dates e cila do kthehet nga String ne Date 
           * @param currentWind Shpejtesia e eres per momentin
@@ -173,7 +185,7 @@ public class Main {
          DateFormat df = new SimpleDateFormat("dd MMMM yyyy");
          String currentWind, currentDay , cDate;
          Date currentDate;
-         int currentCondition, currentTemp;
+         short currentCondition, currentTemp;
          
          /***Moti ditor
           * @param dailyDate Data e dites se dhene
@@ -185,8 +197,10 @@ public class Main {
          Date dailyDate;
          String dailyDay;
          short dailyCondition, dailyMax, dailyMin;
-        /**
-         * @alias Today 
+        
+         
+         /**
+         * @alias Moti i sotem 
          * 
          * Perditeso motin momental
          * @param currentTemp       =   temperatura momentale
@@ -198,7 +212,7 @@ public class Main {
             /***
              * Moti i sotem
              */
-           currentTemp = response
+           currentTemp = (short) response
                     .getJSONObject("query")
                     .getJSONObject("results")
                     .getJSONObject("channel")
@@ -224,13 +238,15 @@ public class Main {
                     .getString("lastBuildDate");
             cDate = cDate.substring(5,16); 
             currentDate = df.parse(cDate);
-            currentCondition = response
+            currentCondition = (short) response
                     .getJSONObject("query")
                     .getJSONObject("results")
                     .getJSONObject("channel")
                     .getJSONObject("item")
                     .getJSONObject("condition")
-                    .getInt("code");   
+                    .getInt("code"); 
+            
+            
             //Deklaro vargun dailyWeather i cili permbane motin per 5 ditet ne vijim
             JSONArray dailyWeather = response
                     .getJSONObject("query")
@@ -245,15 +261,19 @@ public class Main {
                 // nese i=0, mer te dhenat e motit per diten e pare (sot)
                 // nese i=1, mer te dhenat e motit per diten e dyte (neser)
                 JSONObject getDailyWeatherByDay = (JSONObject) dailyWeather.get(i);
-
+                
+                //Mer daten nga JSON Objekti si String, dhe ktheje ne date
                 dailyDate = df.parse(getDailyWeatherByDay.getString("date"));
+                
+                //Perkthe emrin e dites [Mon - E Hene]
                 dailyDay = setDay(getDailyWeatherByDay.getString("day"));
                 dailyCondition = (short) getDailyWeatherByDay.getInt("code");
                 dailyMax = (short) getDailyWeatherByDay.getInt("high");
                 dailyMin = (short) getDailyWeatherByDay.getInt("low");
-                  
+                //Ruaj te dhenat e motit lokalisht  
                 updateDailyWeatherInLocalhost(dailyDate, dailyDay, dailyCondition, dailyMax, dailyMin);
-                setDailyWeather(dailyDate,dailyDay,dailyCondition,dailyMax,dailyMin,i);
+                //Paraqit te dhenat e motit ditor tek perdoruesi ne baze te renditjes [(i=0) - pozita 1]
+                displayDailyWeather(dailyDate,dailyDay,dailyCondition,dailyMax,dailyMin,i);
             }
             
             //Ruaj te dhenat e motit lokalisht
@@ -262,23 +282,26 @@ public class Main {
                                             (short) currentCondition,
                                             (short) currentTemp);
             
-        }catch(Exception e){
+            //Paraqit te dhenat e motit te sotem tek perdoruesi
+            displayTodayWeather(currentTemp,currentWind,currentDay,currentCondition);
+            
+        }catch(JSONException | ParseException e){
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, e);
         }
     }
     
     
-    //6)
+    //6)    Ruajtja e motit lokalisht
     //Shto ne databazen lokale te dhenat e motit per diten e sotme
     private void updateTodayWeatherInLocalhost(String day, Date date, short cond, short current){
         try{           
-            Today today = new Today();
-            today.setCityId(city);
-            today.setDay(day);
-            today.setDate(date);
-            today.setCond(cond);
-            today.setCurrent(current);
-            weatherRepo.setTodayWeather(today); 
+            Today updateToday = new Today();
+            updateToday.setCityId(city);
+            updateToday.setDay(day);
+            updateToday.setDate(date);
+            updateToday.setCond(cond);
+            updateToday.setCurrent(current);
+            weatherRepo.setTodayWeather(updateToday); 
         }catch(Exception ex){
              System.out.println("Problem gjat ruajtjes te motit ditor lokalisht: "+ex);
         } 
@@ -300,8 +323,22 @@ public class Main {
     }
     
     
-    //7)
-    private void setDailyWeather(Date dailyDate,String dailyDay,short dailyCondition,short dailyMax,short dailyMin,int i) {
+    //7)    Shfaqja e te dhenave tek perdoruesi
+    private void displayTodayWeather(int currentTemp,String currentWind,String currentDay,int currentCondition){
+        //Paraqit ikonen, dergo kushtet e motit dhe diten e sotme [0 - dita e sotme]
+        setIcon(String.valueOf(currentCondition),0);
+        
+        System.out.println(
+        "Temp: "+currentTemp+"\n"+
+        "Wind: "+currentWind+"\n"+
+        "Day: "+currentDay+"\n"+
+        "Cond: "+currentCondition +"\n"       
+                );
+    }
+    private void displayDailyWeather(Date dailyDate,String dailyDay,short dailyCondition,short dailyMax,short dailyMin,int i) {
+        //Paraqit ikonen, dergo kushtet e motit dhe diten [(i=0) sot, (i=1) neser]
+        setIcon(String.valueOf(dailyCondition),i);
+        
             switch (i){
                 case 0:
                     /*day0.setText(Day);
@@ -336,5 +373,120 @@ public class Main {
                 default:
                     break;
         }
+    }
+    
+    //8) Shfaqja e ikonave
+    //Gjej ikonen bazuar ne kushtet e motit
+    private void setIcon(String code, int i){
+        String iconSource;
+        short backgroundCode;
+                if (code.matches("0|1|2")) {
+                    iconSource = "mot_me_ere.ico";
+                    backgroundCode = 0;
+                } else if (code.matches("3|4|37|38|39")) {
+                    iconSource = "vetetima.ico";
+                    backgroundCode = 1;
+                } else if (code.matches("5|6|7|25")) {
+                    iconSource = "bore_me_shi.ico";
+                    backgroundCode = 2;
+                } else if (code.matches("9|10")) {
+                    iconSource = "ngrice.ico";
+                    backgroundCode = 3;
+                } else if (code.matches("47|45|10|11|12|37|38|39")) {
+                    iconSource = "rrebesh.ico";
+                    backgroundCode = 4;
+                } else if (code.matches("13|14|15|16|17|18|46|41|42|43")) {
+                    iconSource = "bore.ico";
+                    backgroundCode = 5;
+                } else if (code.matches("19|20|21|22|23|24")) {
+                    iconSource = "mjegull.ico";
+                    backgroundCode = 6;
+                } else if (code.matches("26|27|28|29|30|44")) {
+                    iconSource = "mot_me_re.ico";
+                    backgroundCode = 7;
+                } else if (code.matches("31|32|33|34|36")) {
+                    iconSource = "mot_me_diell.ico";
+                    backgroundCode = 8;
+                } else if (code.matches("35")) {
+                    iconSource = "riga_lokale_shiu.ico";
+                    backgroundCode = 9;
+                } else {
+                    iconSource = "erro_404.ico";
+                    backgroundCode = 10;
+                }
+                if(i==0) setBackground(backgroundCode);
+                displayIcon(iconSource, i);
+    }
+    //Paraqit ikonen e dhene [iconSource] tek pozicioni i caktuar 
+    //  [(i=0) Moti aktuar, (i=1,2,3) Moti ditor]
+    private void displayIcon(String iconSource, int i){
+        switch(i){
+            case 0:
+                //icon0.setIcon(iconSource)
+                break;
+            case 1:
+                //icon1.setIcon(iconSource)
+                break; 
+            case 2:
+                //icon2.setIcon(iconSource)
+                break;
+            case 3:
+                //icon3.setIcon(iconSource)
+                break;
+            case 4:
+                //icon4.setIcon(iconSource)
+                break;
+            case 5:
+                //icon5.setIcon(iconSource)
+                break;
+            default:
+                break; 
+        }
+    }
+    
+    
+    //9) Ndryshimi i prapavise
+    //Ndrysho prapavine bazuar ne kushtet e motit [(conditionCode=1)]
+    private void setBackground(short conditionCode){
+        String imageSource; 
+        
+        switch(conditionCode){ 
+            case 0:
+                imageSource = "mot_me_ere.jpg";
+                break;
+            case 1:
+                imageSource = "vetetima.jpg";
+                break;
+            case 2:
+                imageSource = "bore_me_shi.jpg";
+                break;
+            case 3:
+                imageSource = "ngrice.jpg";
+                break;
+            case 4:
+                imageSource = "rrebesh.jpg";
+                break;
+            case 5:
+                imageSource = "bore.jpg";
+                break;
+            case 6:
+                imageSource = "mjegull.jpg";
+                break;
+            case 7:
+                imageSource = "mot_me_re.jpg";
+                break;
+            case 8:
+                imageSource = "mot_me_diell.jpg";
+                break;
+            case 9:
+                imageSource = "riga_lokale_shiu.jpg";
+                break;
+            default:
+                imageSource = "error_404.jpg";
+                break;
+        }
+
+        //backgroundImgae.setImage(imageSource);
+        
     }
 }

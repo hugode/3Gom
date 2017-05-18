@@ -117,7 +117,7 @@ public class WeatherRepository extends EntityManagerClass{
         *Mer motin Online bazuar ne URL
         */
         //Kthe JSON Objektin nga URL e dhene
-        public static JSONObject getYahooWeather(String url) throws IOException, JSONException {
+        public JSONObject getYahooWeather(String url) throws IOException, JSONException {
             //Lexo te dhenat qe paraqiten ne URL e dhene dhe ruaj si InputStream objekt
             InputStream is = new URL(url).openStream();
             try {
