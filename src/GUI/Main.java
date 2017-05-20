@@ -33,7 +33,18 @@ import org.json.JSONObject;
  * @author Aztech.Web
  */
 public class Main {
-    
+    /**
+     * @param useri Inicializimi i perdoruesit
+     * @param city Inicializimi i City [qytetit], te dhenat <city> i mer nga <useri>
+     * @param dailyList Inicializimi i listes me mot ditor [perdoret vetem ne rastet kur ka te ruajtur mot ditor lokalisht]
+     * @param today Inicializimi i Today [moti aktual]
+     * @param daily Inicializimi i Daily [moti ditor]
+     * @param userRepo Inicializimi i grupit te metodave qe kontrollon informatat e perdoruesit <useri> [username,city_id]
+     * @param weatherRepo Inicializimi i grupit te metodave qe kontrollon lidhjen me databaze ose server [yahoo.com]
+     * @param URL_HOST Pjesa e pare e URL per lidhje me YahooWeather [per tu kompletuar si URL shtohet pjesa e dyte <line:169> dhe pjesa e trete <line:56>]
+     * @param URL_FOOTER Pjesa e trete e URL per lidhje me YahooWeather, definon tipin e te dhenave [JSONObject] njesine matese [Celsious]
+     * @param URL Bashkimi i URL_HOST + URL_CityID + URL_FOOTER [URL e plote per qasje ne YahooWeather <line:169>]
+     */
     Users useri ;
     City city;
     List<Daily> dailyList;
@@ -41,14 +52,8 @@ public class Main {
     Daily daily = new Daily();
     UsersRepository userRepo = new UsersRepository();
     WeatherRepository weatherRepo = new WeatherRepository();
-    Date date = new Date();
-    short cond = 1,temp = 10, max = 16, min = 8;
-    String day = "E Marte";
-    //Pjesa e pare e url [hosti]
     final String URL_HOST = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20woeid%20%3D%22";             
-    //Pjesa e fundit e url [tipi i te dhenave / njesia matese (celsious)]
     final String URL_FOOTER = "%22)%20and%20u%3D%22c%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
-    //URL eshte bashkim i URL_HOST + cityZip + URL_FOOTER
     String URL;
     
     public static void main(String [] args) {            
@@ -63,7 +68,7 @@ public class Main {
     /*
     *METODAT:
     * 1)    Validimi i perdoruesit
-    * 2)    Perkthim 
+    * 2)    Perkthim i emrit te dites
     * 3)    Pastrim i databazes
     * 4)    Marrja e te dhenave lokalisht
     * 5)    Marrja e te dhenave Online
@@ -73,7 +78,7 @@ public class Main {
     * 9)    Ndryshimi i prapavise
     */
     
-    //1)    Validimi i perdoruesit
+    /**1)    <Validimi i perdoruesit>   */
     private boolean hasSpaces(String s){
     //kontrollo per hapsira    
     Pattern pattern = Pattern.compile("\\s");
@@ -104,7 +109,7 @@ public class Main {
     }
     
     
-    //2)    Perkthim
+    /**2)    <Perkthimi i dites>    **/
     //Perkthe emrin e dites
     private static String setDay(String Day){      
         switch (Day) { 
@@ -127,7 +132,7 @@ public class Main {
     }
     
     
-    //3)    Pastrim i databazes
+    /**3)    <Pastrim i databazes>    */
     //Fshij te gjitha te dhenat e motit te ruajtura lokalisht per qytetin e perdoruesit
     private void clearCache(){
         try {
@@ -143,9 +148,10 @@ public class Main {
     }
     
     
-    //4)    Marrja e te dhenave lokalisht
+    /**4)    <Marrja e te dhenave lokalisht>    */
     //Mer te dhenat e motit lokalisht
     private void getWeatherLocaly(){ 
+        Date date = new Date();
         try {
         today = weatherRepo.getWeather(city,date);
         dailyList = weatherRepo.getDailyWeather(city,date);
@@ -155,7 +161,8 @@ public class Main {
         }
     }
     
-    //5)    Marrja e te dhenave Online 
+    
+    /**5)    <Marrja e te dhenave Online>   */ 
     //Mer te dhenat e motit nga YahooWeather dhe ruaj ato lokalisht
     private void getWeatherOnline(){ 
         //Bashko hostin e URL me ID te qytetit dhe ne fund shto edhe konfigurimet [moti te kthehet si JSON Object]
@@ -291,7 +298,7 @@ public class Main {
     }
     
     
-    //6)    Ruajtja e motit lokalisht
+    /**6)    <Ruajtja e motit lokalisht>    */
     //Shto ne databazen lokale te dhenat e motit per diten e sotme
     private void updateTodayWeatherInLocalhost(String day, Date date, short cond, short current){
         try{           
@@ -323,7 +330,7 @@ public class Main {
     }
     
     
-    //7)    Shfaqja e te dhenave tek perdoruesi
+    /**7)    <Shfaqja e te dhenave tek perdoruesi>    */
     private void displayTodayWeather(int currentTemp,String currentWind,String currentDay,int currentCondition){
         //Paraqit ikonen, dergo kushtet e motit dhe diten e sotme [0 - dita e sotme]
         setIcon(String.valueOf(currentCondition),0);
@@ -375,7 +382,7 @@ public class Main {
         }
     }
     
-    //8) Shfaqja e ikonave
+    /**8)   <Shfaqja e ikonave>   */
     //Gjej ikonen bazuar ne kushtet e motit
     private void setIcon(String code, int i){
         String iconSource;
@@ -445,7 +452,7 @@ public class Main {
     }
     
     
-    //9) Ndryshimi i prapavise
+    /**9)   <Ndryshimi i prapavise>   */
     //Ndrysho prapavine bazuar ne kushtet e motit [(conditionCode=1)]
     private void setBackground(short conditionCode){
         String imageSource; 
@@ -485,8 +492,6 @@ public class Main {
                 imageSource = "error_404.jpg";
                 break;
         }
-
         //backgroundImgae.setImage(imageSource);
-        
     }
 }
