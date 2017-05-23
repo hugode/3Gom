@@ -18,6 +18,8 @@
     <class>BL.Remember</class>
     <class>BL.Telegrafi</class>
     <class>BL.Daily</class>
+    <class>BL.Reminder</class>
+    <class>BL.Remind</class>
     <properties>
       <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/tregom?zeroDateTimeBehavior=convertToNull"/>
       <property name="javax.persistence.jdbc.password" value="toor"/>

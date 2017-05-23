@@ -13,6 +13,7 @@ import BL.Users;
 import DAL.Exceptions;
 import DAL.UsersRepository;
 import DAL.WeatherRepository;
+import DAL.RemindersRepository;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -56,11 +57,14 @@ public class Main {
     final String URL_FOOTER = "%22)%20and%20u%3D%22c%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
     String URL;
     
+            
     public static void main(String [] args) {            
         try{
-            new Main().checkUser();
+
+           new Main().checkUser();
+
         }catch(Exception e){
-            System.out.println(e.getMessage());
+            System.out.println("NOT ERR: "+e.getMessage());
         }
     }
  
@@ -79,19 +83,6 @@ public class Main {
     */
     
     /**1)    <Validimi i perdoruesit>   */
-    private boolean hasSpaces(String s){
-    //kontrollo per hapsira    
-    Pattern pattern = Pattern.compile("\\s");
-    Matcher matcher = pattern.matcher(s);
-    return  matcher.find();
-    }
-    private boolean hasSpecialChars(String s){
-    //kontrollo per cdo karakter tjeter perveq A-Z, 0-9 dhe . (pika)
-        //nuk ka rendesi nese karakteret jane shkronja te medha ose te vogla (CASE_INSENSITIVE)
-    Pattern p = Pattern.compile("[^a-z0-9. ]", Pattern.CASE_INSENSITIVE);
-    Matcher m = p.matcher(s);
-    return  m.find();
-    }
     //Kontrollo nese perdoruesi egziston 
     private void checkUser() throws Exception{           
       try{
@@ -99,37 +90,23 @@ public class Main {
           useri = userRepo.getUser("doni","123456"); 
           city = useri.getCityId();
           //Nese perdoruesi ka te caktuar qytetin vazhdo me pjesen e motit 
-          if(city.getId()>0)
+          /*if(city.getId()>0)
             getWeatherLocaly();
           else
-              throw new Exception("Perdoruesi nuk e ka te caktuar qytetin");
+              throw new Exception("Perdoruesi nuk e ka te caktuar qytetin");*/
+            
+
+           RemindersRepository remindersRep = new RemindersRepository();
+           remindersRep.getReminders(useri);
       }catch(Exception e){       
-          throw new Exception(e);
+          throw new Exception("Main -> checkUser: "+e.getMessage());
       }
     }
     
     
-    /**2)    <Perkthimi i dites>    **/
-    //Perkthe emrin e dites
-    private static String setDay(String Day){      
-        switch (Day) { 
-            case "Mon":
-                return "E Hene";
-            case "Tue": 
-                return "E Marte";
-            case "Wed": 
-                return "E Merkure";
-            case "Thu": 
-                return "E Enjete";
-            case "Fri": 
-                return "E Premte";
-            case "Sat": 
-                return "E Shtunë";
-            case "Sun": 
-                return "E Diel";
-        }
-        return null;        
-    }
+
+
+
     
     
     /**3)    <Pastrim i databazes>    */
@@ -237,7 +214,7 @@ public class Main {
                     .getJSONObject("results")
                     .getJSONObject("channel")
                     .getString("lastBuildDate");
-            currentDay = setDay(currentDay.substring(0, 3));
+            currentDay = userRepo.setDay(currentDay.substring(0, 3));
             cDate = response
                     .getJSONObject("query")
                     .getJSONObject("results")
@@ -273,21 +250,21 @@ public class Main {
                 dailyDate = df.parse(getDailyWeatherByDay.getString("date"));
                 
                 //Perkthe emrin e dites [Mon - E Hene]
-                dailyDay = setDay(getDailyWeatherByDay.getString("day"));
+                dailyDay = userRepo.setDay(getDailyWeatherByDay.getString("day"));
                 dailyCondition = (short) getDailyWeatherByDay.getInt("code");
                 dailyMax = (short) getDailyWeatherByDay.getInt("high");
                 dailyMin = (short) getDailyWeatherByDay.getInt("low");
                 //Ruaj te dhenat e motit lokalisht  
-                updateDailyWeatherInLocalhost(dailyDate, dailyDay, dailyCondition, dailyMax, dailyMin);
+                weatherRepo.updateDailyWeatherInLocalhost(dailyDate, dailyDay, dailyCondition, dailyMax, dailyMin,city);
                 //Paraqit te dhenat e motit ditor tek perdoruesi ne baze te renditjes [(i=0) - pozita 1]
                 displayDailyWeather(dailyDate,dailyDay,dailyCondition,dailyMax,dailyMin,i);
             }
             
             //Ruaj te dhenat e motit lokalisht
-            updateTodayWeatherInLocalhost(currentDay,
+            weatherRepo.updateTodayWeatherInLocalhost(currentDay,
                                             currentDate,
                                             (short) currentCondition,
-                                            (short) currentTemp);
+                                            (short) currentTemp,city);
             
             //Paraqit te dhenat e motit te sotem tek perdoruesi
             displayTodayWeather(currentTemp,currentWind,currentDay,currentCondition);
@@ -298,36 +275,8 @@ public class Main {
     }
     
     
-    /**6)    <Ruajtja e motit lokalisht>    */
-    //Shto ne databazen lokale te dhenat e motit per diten e sotme
-    private void updateTodayWeatherInLocalhost(String day, Date date, short cond, short current){
-        try{           
-            Today updateToday = new Today();
-            updateToday.setCityId(city);
-            updateToday.setDay(day);
-            updateToday.setDate(date);
-            updateToday.setCond(cond);
-            updateToday.setCurrent(current);
-            weatherRepo.setTodayWeather(updateToday); 
-        }catch(Exception ex){
-             System.out.println("Problem gjat ruajtjes te motit ditor lokalisht: "+ex);
-        } 
-    }
-    //Shto ne databazen lokale te dhenat e motit per ditet ne vijim
-    private void updateDailyWeatherInLocalhost(Date date, String day,short cond, short max, short min){    
-        try{    
-            Daily dailyThisDay = new Daily();
-            dailyThisDay.setCityId(city);
-            dailyThisDay.setDate(date);
-            dailyThisDay.setDay(day);
-            dailyThisDay.setCond(cond);
-            dailyThisDay.setMin(min);
-            dailyThisDay.setMax(max); 
-            weatherRepo.setDailyWeather(dailyThisDay); 
-        }catch(Exception ex){
-            System.out.println("Problem gjat ruajtjes te motit 5 ditor lokalisht: "+ex);
-        }
-    }
+
+
     
     
     /**7)    <Shfaqja e te dhenave tek perdoruesi>    */

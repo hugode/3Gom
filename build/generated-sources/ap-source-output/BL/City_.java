@@ -8,15 +8,15 @@ import javax.persistence.metamodel.CollectionAttribute;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.StaticMetamodel;
 
-@Generated(value="EclipseLink-2.5.2.v20140319-rNA", date="2017-05-18T13:42:11")
+@Generated(value="EclipseLink-2.5.2.v20140319-rNA", date="2017-05-22T10:30:48")
 @StaticMetamodel(City.class)
 public class City_ { 
 
-    public static volatile SingularAttribute<City, Integer> id;
     public static volatile SingularAttribute<City, Integer> zip;
-    public static volatile CollectionAttribute<City, Daily> dailyCollection;
     public static volatile SingularAttribute<City, String> name;
-    public static volatile CollectionAttribute<City, Users> usersCollection;
+    public static volatile CollectionAttribute<City, Daily> dailyCollection;
+    public static volatile SingularAttribute<City, Integer> id;
     public static volatile CollectionAttribute<City, Today> todayCollection;
+    public static volatile CollectionAttribute<City, Users> usersCollection;
 
 }

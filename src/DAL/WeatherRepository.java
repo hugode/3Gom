@@ -153,4 +153,38 @@ public class WeatherRepository extends EntityManagerClass{
         }
         
         
+    //Shto ne databazen lokale te dhenat e motit per diten e sotme  
+    public void updateTodayWeatherInLocalhost(String day, Date date, short cond, short current, City city){
+        try{           
+            Today updateToday = new Today();
+            updateToday.setCityId(city);
+            updateToday.setDay(day);
+            updateToday.setDate(date);
+            updateToday.setCond(cond);
+            updateToday.setCurrent(current);
+            setTodayWeather(updateToday); 
+        }catch(Exception ex){
+             System.out.println("Problem gjat ruajtjes te motit ditor lokalisht: "+ex);
+        } 
+    }
+    //Shto ne databazen lokale te dhenat e motit per ditet ne vijim
+    public void updateDailyWeatherInLocalhost(Date date, String day,short cond, short max, short min, City city){    
+        try{    
+            
+            Daily dailyThisDay = new Daily();
+            dailyThisDay.setCityId(city);
+            dailyThisDay.setDate(date);
+            dailyThisDay.setDay(day);
+            dailyThisDay.setCond(cond);
+            dailyThisDay.setMin(min);
+            dailyThisDay.setMax(max); 
+            setDailyWeather(dailyThisDay); 
+        }catch(Exception ex){
+            System.out.println("Problem gjat ruajtjes te motit 5 ditor lokalisht: "+ex);
+        }
+    }
+    
+    
+        
+        
 }

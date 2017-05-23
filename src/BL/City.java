@@ -45,11 +45,11 @@ public class City implements Serializable {
     @Column(name = "zip")
     private Integer zip;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "cityId")
-    private Collection<Users> usersCollection;
+    private Collection<Daily> dailyCollection;
     @OneToMany(mappedBy = "cityId")
     private Collection<Today> todayCollection;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "cityId")
-    private Collection<Daily> dailyCollection;
+    private Collection<Users> usersCollection;
 
     public City() {
     }
@@ -83,12 +83,12 @@ public class City implements Serializable {
     }
 
     @XmlTransient
-    public Collection<Users> getUsersCollection() {
-        return usersCollection;
+    public Collection<Daily> getDailyCollection() {
+        return dailyCollection;
     }
 
-    public void setUsersCollection(Collection<Users> usersCollection) {
-        this.usersCollection = usersCollection;
+    public void setDailyCollection(Collection<Daily> dailyCollection) {
+        this.dailyCollection = dailyCollection;
     }
 
     @XmlTransient
@@ -101,12 +101,12 @@ public class City implements Serializable {
     }
 
     @XmlTransient
-    public Collection<Daily> getDailyCollection() {
-        return dailyCollection;
+    public Collection<Users> getUsersCollection() {
+        return usersCollection;
     }
 
-    public void setDailyCollection(Collection<Daily> dailyCollection) {
-        this.dailyCollection = dailyCollection;
+    public void setUsersCollection(Collection<Users> usersCollection) {
+        this.usersCollection = usersCollection;
     }
 
     @Override
