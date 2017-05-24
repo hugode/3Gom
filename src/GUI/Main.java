@@ -8,6 +8,7 @@ package GUI;
 
 import BL.City;
 import BL.Daily;
+import BL.Reminders;
 import BL.Today;
 import BL.Users;
 import DAL.Exceptions;
@@ -442,5 +443,14 @@ public class Main {
                 break;
         }
         //backgroundImgae.setImage(imageSource);
+    }
+    
+    
+    
+    
+    /**10) <Set Rem >*/
+    public void setRem(Reminders r, int isset){
+        if(isset==1)
+            System.out.println(r.getRemindersTitle());
     }
 }

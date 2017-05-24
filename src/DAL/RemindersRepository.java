@@ -6,8 +6,10 @@
 package DAL;
 
 import BL.City;
+import BL.Daily;
 import BL.Reminders;
 import BL.Users;
+import GUI.Main;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -47,7 +49,7 @@ public class RemindersRepository extends EntityManagerClass{
         return null;
     }
     
-    public List<Reminders> getReminders(Users u) throws Exceptions, JSONException, ParseException  {
+    public void getReminders(Users u) throws Exceptions, JSONException, ParseException  {
         List<Reminders> allReminders = getListOfReminders(u);
         try{
             for(Reminders reminder : allReminders){
@@ -66,11 +68,13 @@ public class RemindersRepository extends EntityManagerClass{
                     .getJSONObject("channel")
                     .getJSONObject("item")
                     .getJSONArray("forecast");
-              
-                            
-                weatherRepo.clearDailyWeather(city);
                 
-                for (int i = 0; i < 5; i++) {
+              //Clear cache  
+              weatherRepo.clearDailyWeather(city);
+                            
+                
+                
+                for (int i = 0; i < dailyWeather.length(); i++) {
                     /***Moti ditor
                     * @param dailyDate Data e dites se dhene
                     * @param dailyDay Emri i dites se dhene
@@ -99,14 +103,16 @@ public class RemindersRepository extends EntityManagerClass{
                 dailyMin = (short) getDailyWeatherByDay.getInt("low");
                 //Ruaj te dhenat e motit lokalisht  
                 weatherRepo.updateDailyWeatherInLocalhost(dailyDate, dailyDay, dailyCondition, dailyMax, dailyMin,city);
+                
                 }//FOR
+                setReminderInMainPage(reminder);
              }//IF
             }//FOR
+            
+            
         }catch(Exceptions e){
            throw new Exceptions(e.getMessage());       
         }
-        
-        return null;
     }
     private JSONObject getWeather(String URL)throws Exceptions{
         try{
@@ -115,6 +121,34 @@ public class RemindersRepository extends EntityManagerClass{
         }catch(IOException | JSONException e){
             throw new Exceptions(e.getMessage());
         }
+    }
+    private void setReminderInMainPage(Reminders r) throws Exceptions{
+        int i = 0;
+        Query q = em.createQuery("SELECT d FROM Daily d WHERE "
+                + "d.cond=:c AND "
+                + "d.date=:d AND "
+                + "d.cityId=:city AND "
+                + "d.max>=:temp"
+                );
+        int c = r.getRemindersCondition();
+        Date d = r.getRemindersDate();
+        City city = new City(); 
+        city.setId(r.getRemindersCity());
+        q.setParameter("c", c);
+        q.setParameter("d", d);
+        q.setParameter("city", city);
+        q.setParameter("temp", r.getRemindersHigher());
+        try{
+           Daily daily  =(Daily) q.getSingleResult();
+           if(daily.getDailyId()>0)
+               i=1;
+        }catch(NoResultException e){
+            System.out.println("No data");
+        }
+        
+        Main m = new Main();
+        m.setRem(r,i);
+
     }
     
 }
