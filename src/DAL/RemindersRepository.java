@@ -9,7 +9,6 @@ import BL.City;
 import BL.Daily;
 import BL.Reminders;
 import BL.Users;
-import GUI.Main;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -143,11 +142,11 @@ public class RemindersRepository extends EntityManagerClass{
            if(daily.getDailyId()>0)
                i=1;
         }catch(NoResultException e){
-            System.out.println("No data");
+            System.out.println("RemindersRepository -> setReminderInMainPage: Nuk ka Reminders");
         }
         
-        Main m = new Main();
-        m.setRem(r,i);
+       // Main m = new Main();
+        //m.setRem(r,i);
 
     }
     
