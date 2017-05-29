@@ -9,10 +9,12 @@ import BL.City;
 import BL.Daily;
 import BL.Reminders;
 import BL.Users;
+import GUI.Main;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import javax.persistence.NoResultException;
@@ -29,7 +31,7 @@ public class RemindersRepository extends EntityManagerClass{
     UsersRepository userRepo = new UsersRepository();
     WeatherRepository weatherRepo = new WeatherRepository();
     
-    public List<Reminders> getListOfReminders(Users u) throws Exceptions{
+    public List<Reminders> getListOfReminders(Users u) throws Exceptions, JSONException, ParseException{
         Date d = new Date();
         Query q = em.createQuery("SELECT r FROM Reminders r WHERE "
                 + "r.remindersUser=:u AND "
@@ -39,41 +41,41 @@ public class RemindersRepository extends EntityManagerClass{
         q.setParameter("d", d);
         try{
         List<Reminders> reminders = (List<Reminders>) q.getResultList();
+        for(Reminders r : reminders)
+            getRemindersWeatherOnline(r);
         return reminders;
         }catch(NoResultException e){
-            System.out.println("Nuk ka result.");
-        }catch(Exception e){
-            throw new Exceptions("RemindersRepository -> getListOfReminders: "+e.getMessage());
+            throw new Exceptions("RemindersRepository => getListOfReminders: "+e.getMessage());
         }
-        return null;
+    
     }
     
-    public void getReminders(Users u) throws Exceptions, JSONException, ParseException  {
-        List<Reminders> allReminders = getListOfReminders(u);
-        try{
-            for(Reminders reminder : allReminders){
-             if(reminder.getRemindersIsset()==1){
-                City city = userRepo.getCity(reminder.getRemindersCity());
-                URL = URL_HOST + city.getZip() + URL_FOOTER;
-                
-      
-                JSONObject yahooWeather = getWeather(URL);
-                
-
-
-                JSONArray dailyWeather = yahooWeather
+ 
+    /** 
+     *  Mer qytetin nga reminders dhe kerko online per motin e ketij qyteti
+     */
+    private void getRemindersWeatherOnline(Reminders r) throws Exceptions, JSONException, ParseException{
+        Calendar today = Calendar.getInstance();
+        Calendar remindersDate = Calendar.getInstance();
+        today.add(Calendar.DATE, 10);
+        remindersDate.setTime(r.getRemindersDate());
+        
+        //Nese data e reminders nuk eshte brenda 10 ditesh, mos kerko online
+        //per arsye se maksimumi i rezultatit nga Yahoo eshte per 10 ditet e ardhshme
+        if(remindersDate.before(today))
+            return;
+        
+        try{  
+        City city = userRepo.getCity(r.getRemindersCity());
+        JSONObject yahooWeather = getWeather(city.getZip());
+        JSONArray dailyWeather = yahooWeather
                     .getJSONObject("query")
                     .getJSONObject("results")
                     .getJSONObject("channel")
                     .getJSONObject("item")
                     .getJSONArray("forecast");
-                
-              //Clear cache  
-              weatherRepo.clearDailyWeather(city);
-                            
-                
-                
-                for (int i = 0; i < dailyWeather.length(); i++) {
+        weatherRepo.clearDailyWeather(city);
+        for (int i = 0; i < dailyWeather.length(); i++) {
                     /***Moti ditor
                     * @param dailyDate Data e dites se dhene
                     * @param dailyDay Emri i dites se dhene
@@ -104,24 +106,27 @@ public class RemindersRepository extends EntityManagerClass{
                 weatherRepo.updateDailyWeatherInLocalhost(dailyDate, dailyDay, dailyCondition, dailyMax, dailyMin,city);
                 
                 }//FOR
-                setReminderInMainPage(reminder);
-             }//IF
-            }//FOR
-            
-            
         }catch(Exceptions e){
-           throw new Exceptions(e.getMessage());       
+            throw new Exceptions("Exceptions e"+e.getMessage());
+        }catch(JSONException e){
+            throw new Exceptions("JSONException e"+e.getMessage());
+        }catch(ParseException e){
+            throw new Exceptions("ParseException e"+e.getMessage());
         }
     }
-    private JSONObject getWeather(String URL)throws Exceptions{
+    private JSONObject getWeather(int cityId)throws Exceptions{
         try{
+            URL = URL_HOST + cityId + URL_FOOTER;
             JSONObject yahooWeather = weatherRepo.getYahooWeather(URL);
             return yahooWeather;
         }catch(IOException | JSONException e){
             throw new Exceptions(e.getMessage());
         }
     }
-    private void setReminderInMainPage(Reminders r) throws Exceptions{
+    
+    
+    
+    public boolean getWeatherForReminder(Reminders r) throws Exceptions{
         int i = 0;
         Query q = em.createQuery("SELECT d FROM Daily d WHERE "
                 + "d.cond=:c AND "
@@ -140,14 +145,12 @@ public class RemindersRepository extends EntityManagerClass{
         try{
            Daily daily  =(Daily) q.getSingleResult();
            if(daily.getDailyId()>0)
-               i=1;
+               return true;
         }catch(NoResultException e){
-            System.out.println("RemindersRepository -> setReminderInMainPage: Nuk ka Reminders");
+            System.out.println("No data");
         }
-        
-       // Main m = new Main();
-        //m.setRem(r,i);
-
+        return false;
+                
     }
     
 }
