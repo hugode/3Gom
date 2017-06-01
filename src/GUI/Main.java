@@ -54,6 +54,7 @@ public class Main {
     Daily daily = new Daily();
     UsersRepository userRepo = new UsersRepository();
     WeatherRepository weatherRepo = new WeatherRepository();
+    RemindersRepository remindRepo = new RemindersRepository();
     final String URL_HOST = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20woeid%20%3D%22";             
     final String URL_FOOTER = "%22)%20and%20u%3D%22c%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
     String URL;
@@ -99,7 +100,7 @@ public class Main {
 
            RemindersRepository remindersRep = new RemindersRepository();
            List<Reminders> r = remindersRep.getListOfReminders(useri);
-           System.out.println(r);
+           displayReminder(r);
       }catch(Exception e){       
           throw new Exception("Main -> checkUser: "+e.getMessage());
       }
@@ -450,8 +451,13 @@ public class Main {
     
     
     /**10) <Set Rem >*/
-    public void setRem(Reminders r, int isset){
-        if(isset==1)
-            System.out.println(r.getRemindersTitle());
+    public void displayReminder(List<Reminders> r) throws Exceptions{
+        
+        for(Reminders reminder : r)
+        {   if(reminder.getRemindersIsset()==1)
+            if(remindRepo.isWeatherFriendly(reminder))
+                System.out.println("a");
+        }
+        
     }
 }

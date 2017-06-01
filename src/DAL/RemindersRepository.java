@@ -37,7 +37,7 @@ public class RemindersRepository extends EntityManagerClass{
                 + "r.remindersUser=:u AND "
                 + "r.remindersDate>=:d "
                 + "ORDER BY r.remindersDate ASC").setMaxResults(10);
-        q.setParameter("u", u.getUsersPK().getUsername());
+        q.setParameter("u", u.getUsername());
         q.setParameter("d", d);
         try{
         List<Reminders> reminders = (List<Reminders>) q.getResultList();
@@ -126,19 +126,15 @@ public class RemindersRepository extends EntityManagerClass{
     
     
     
-    public boolean getWeatherForReminder(Reminders r) throws Exceptions{
-        int i = 0;
+    public boolean isWeatherFriendly(Reminders r) throws Exceptions{
         Query q = em.createQuery("SELECT d FROM Daily d WHERE "
-                + "d.cond=:c AND "
                 + "d.date=:d AND "
                 + "d.cityId=:city AND "
                 + "d.max>=:temp"
                 );
-        int c = r.getRemindersCondition();
         Date d = r.getRemindersDate();
         City city = new City(); 
         city.setId(r.getRemindersCity());
-        q.setParameter("c", c);
         q.setParameter("d", d);
         q.setParameter("city", city);
         q.setParameter("temp", r.getRemindersHigher());
@@ -147,10 +143,19 @@ public class RemindersRepository extends EntityManagerClass{
            if(daily.getDailyId()>0)
                return true;
         }catch(NoResultException e){
-            System.out.println("No data");
+            return false;
         }
         return false;
-                
+    }
+    
+    public void addReminder(Reminders r) throws Exceptions{
+        try{
+            em.getTransaction().begin();
+            em.persist(r);
+            em.getTransaction().commit();
+        }catch(Exception e){
+            throw new Exceptions(e.getMessage());
+        }
     }
     
 }

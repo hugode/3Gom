@@ -35,7 +35,6 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "Reminders.findByRemindersTitle", query = "SELECT r FROM Reminders r WHERE r.remindersTitle = :remindersTitle"),
     @NamedQuery(name = "Reminders.findByRemindersDate", query = "SELECT r FROM Reminders r WHERE r.remindersDate = :remindersDate"),
     @NamedQuery(name = "Reminders.findByRemindersHigher", query = "SELECT r FROM Reminders r WHERE r.remindersHigher = :remindersHigher"),
-    @NamedQuery(name = "Reminders.findByRemindersCondition", query = "SELECT r FROM Reminders r WHERE r.remindersCondition = :remindersCondition"),
     @NamedQuery(name = "Reminders.findByRemindersCity", query = "SELECT r FROM Reminders r WHERE r.remindersCity = :remindersCity"),
     @NamedQuery(name = "Reminders.findByRemindersIsset", query = "SELECT r FROM Reminders r WHERE r.remindersIsset = :remindersIsset")})
 public class Reminders implements Serializable {
@@ -58,8 +57,6 @@ public class Reminders implements Serializable {
     private Date remindersDate;
     @Column(name = "reminders_higher")
     private Short remindersHigher;
-    @Column(name = "reminders_condition")
-    private Short remindersCondition;
     @Column(name = "reminders_city")
     private Integer remindersCity;
     @Column(name = "reminders_isset")
@@ -123,14 +120,6 @@ public class Reminders implements Serializable {
 
     public void setRemindersHigher(Short remindersHigher) {
         this.remindersHigher = remindersHigher;
-    }
-
-    public Short getRemindersCondition() {
-        return remindersCondition;
-    }
-
-    public void setRemindersCondition(Short remindersCondition) {
-        this.remindersCondition = remindersCondition;
     }
 
     public Integer getRemindersCity() {

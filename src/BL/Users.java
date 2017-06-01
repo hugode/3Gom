@@ -8,8 +8,10 @@ package BL;
 import java.io.Serializable;
 import javax.persistence.Basic;
 import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
@@ -26,14 +28,20 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "Users.findAll", query = "SELECT u FROM Users u"),
-    @NamedQuery(name = "Users.findById", query = "SELECT u FROM Users u WHERE u.usersPK.id = :id"),
-    @NamedQuery(name = "Users.findByUsername", query = "SELECT u FROM Users u WHERE u.usersPK.username = :username"),
+    @NamedQuery(name = "Users.findById", query = "SELECT u FROM Users u WHERE u.id = :id"),
+    @NamedQuery(name = "Users.findByUsername", query = "SELECT u FROM Users u WHERE u.username = :username"),
     @NamedQuery(name = "Users.findByPassword", query = "SELECT u FROM Users u WHERE u.password = :password"),
     @NamedQuery(name = "Users.findByName", query = "SELECT u FROM Users u WHERE u.name = :name")})
 public class Users implements Serializable {
     private static final long serialVersionUID = 1L;
-    @EmbeddedId
-    protected UsersPK usersPK;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Basic(optional = false)
+    @Column(name = "id")
+    private Integer id;
+    @Basic(optional = false)
+    @Column(name = "username")
+    private String username;
     @Basic(optional = false)
     @Column(name = "password")
     private String password;
@@ -47,26 +55,31 @@ public class Users implements Serializable {
     public Users() {
     }
 
-    public Users(UsersPK usersPK) {
-        this.usersPK = usersPK;
+    public Users(Integer id) {
+        this.id = id;
     }
 
-    public Users(UsersPK usersPK, String password, String name) {
-        this.usersPK = usersPK;
+    public Users(Integer id, String username, String password, String name) {
+        this.id = id;
+        this.username = username;
         this.password = password;
         this.name = name;
     }
 
-    public Users(int id, String username) {
-        this.usersPK = new UsersPK(id, username);
+    public Integer getId() {
+        return id;
     }
 
-    public UsersPK getUsersPK() {
-        return usersPK;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
-    public void setUsersPK(UsersPK usersPK) {
-        this.usersPK = usersPK;
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getPassword() {
@@ -96,7 +109,7 @@ public class Users implements Serializable {
     @Override
     public int hashCode() {
         int hash = 0;
-        hash += (usersPK != null ? usersPK.hashCode() : 0);
+        hash += (id != null ? id.hashCode() : 0);
         return hash;
     }
 
@@ -107,7 +120,7 @@ public class Users implements Serializable {
             return false;
         }
         Users other = (Users) object;
-        if ((this.usersPK == null && other.usersPK != null) || (this.usersPK != null && !this.usersPK.equals(other.usersPK))) {
+        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
             return false;
         }
         return true;
@@ -115,7 +128,7 @@ public class Users implements Serializable {
 
     @Override
     public String toString() {
-        return "BL.Users[ usersPK=" + usersPK + " ]";
+        return "BL.Users[ id=" + id + " ]";
     }
     
 }
