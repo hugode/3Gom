@@ -454,7 +454,7 @@ public class Main {
     public void displayReminder(List<Reminders> r) throws Exceptions{
         
         for(Reminders reminder : r)
-        {   if(reminder.getRemindersIsset()==1)
+        {   if(reminder.getRemindersIsset())
             if(remindRepo.isWeatherFriendly(reminder))
                 System.out.println("a");
         }

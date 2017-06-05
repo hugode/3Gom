@@ -88,7 +88,53 @@ public class UsersRepository extends EntityManagerClass{
         }
         return null;        
     }
-    
+    //Konverto muajin
+    public String monthString(String str){
+        int i = 0;
+        switch(str){
+            case "Janar":
+                i=1;
+                break;
+            case "Shkurt":
+                i=2;
+                break;
+            case "Mars":
+                i=3;
+                break;
+             case "Prill":
+                i=4;
+                break;
+            case "Maj":
+                i=5;
+                break;
+            case "Qershor":
+                i=6;
+                break;
+            case "Korrik":
+                i=7;
+                break;
+            case "Gusht":
+                i=8;
+                break;
+            case "Shtator":
+                i=9;
+                break;
+            case "Tetor":
+                i=10;
+                break;
+            case "Nentor":
+                i=11;
+                break;
+            case "Dhjetor":
+                i=12;
+                break;
+            default:
+                i=0;
+                break;
+        }
+        return ""+i;
+    }
+        
     //kontrollo per hapsira ne Username
     public boolean hasSpaces(String s){
     Pattern pattern = Pattern.compile("\\s");

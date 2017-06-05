@@ -182,11 +182,12 @@ public class Register extends javax.swing.JFrame {
        user.setPassword(password);
        user.setCityId(c);
        if (userClean(username)) {
-        userRepo.create(user);
-        Home home = new Home();
-        home.setVisible(true);
-        this.dispose();
-        
+           userRepo.create(user);
+           JOptionPane.showMessageDialog(this, "Regjistrimi perfundoi me sukses");
+            Login login = new Login();
+            login.setVisible(true);
+            this.dispose();
+           
        } else {
         JOptionPane.showMessageDialog(this, "Perdoruesi ekziston");
        }
@@ -476,7 +477,7 @@ return true;
         ruajButoni.setBackground(new java.awt.Color(51, 102, 255));
         ruajButoni.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         ruajButoni.setForeground(new java.awt.Color(255, 255, 255));
-        ruajButoni.setText("Kyçuni");
+        ruajButoni.setText("Regjistrohu");
         ruajButoni.setBorder(javax.swing.BorderFactory.createTitledBorder(""));
         ruajButoni.setBorderPainted(false);
         ruajButoni.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));

@@ -36,7 +36,8 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "Reminders.findByRemindersDate", query = "SELECT r FROM Reminders r WHERE r.remindersDate = :remindersDate"),
     @NamedQuery(name = "Reminders.findByRemindersHigher", query = "SELECT r FROM Reminders r WHERE r.remindersHigher = :remindersHigher"),
     @NamedQuery(name = "Reminders.findByRemindersCity", query = "SELECT r FROM Reminders r WHERE r.remindersCity = :remindersCity"),
-    @NamedQuery(name = "Reminders.findByRemindersIsset", query = "SELECT r FROM Reminders r WHERE r.remindersIsset = :remindersIsset")})
+    @NamedQuery(name = "Reminders.findByRemindersIsset", query = "SELECT r FROM Reminders r WHERE r.remindersIsset = :remindersIsset"),
+    @NamedQuery(name = "Reminders.findByRemindersShared", query = "SELECT r FROM Reminders r WHERE r.remindersShared = :remindersShared")})
 public class Reminders implements Serializable {
     private static final long serialVersionUID = 1L;
     @Id
@@ -60,7 +61,9 @@ public class Reminders implements Serializable {
     @Column(name = "reminders_city")
     private Integer remindersCity;
     @Column(name = "reminders_isset")
-    private Short remindersIsset;
+    private Boolean remindersIsset;
+    @Column(name = "reminders_shared")
+    private Boolean remindersShared;
 
     public Reminders() {
     }
@@ -130,12 +133,20 @@ public class Reminders implements Serializable {
         this.remindersCity = remindersCity;
     }
 
-    public Short getRemindersIsset() {
+    public Boolean getRemindersIsset() {
         return remindersIsset;
     }
 
-    public void setRemindersIsset(Short remindersIsset) {
+    public void setRemindersIsset(Boolean remindersIsset) {
         this.remindersIsset = remindersIsset;
+    }
+
+    public Boolean getRemindersShared() {
+        return remindersShared;
+    }
+
+    public void setRemindersShared(Boolean remindersShared) {
+        this.remindersShared = remindersShared;
     }
 
     @Override

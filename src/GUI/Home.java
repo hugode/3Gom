@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.util.converter.DateStringConverter;
+import javax.swing.JOptionPane;
 import javax.swing.Timer;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -65,7 +66,7 @@ public class Home extends javax.swing.JFrame {
     /*
     *METODAT:
     * 1)    Validimi i perdoruesit
-    * 2)    Perkthim i emrit te dites
+    * 2)    Mer reminders
     * 3)    Pastrim i databazes
     * 4)    Marrja e te dhenave lokalisht
     * 5)    Marrja e te dhenave Online
@@ -77,9 +78,6 @@ public class Home extends javax.swing.JFrame {
     public Home() {
         initComponents();
         this.setLocationRelativeTo(null);
-
-        if(useri == null)
-                System.exit(0);
         
             
         
@@ -101,16 +99,17 @@ public class Home extends javax.swing.JFrame {
         remind1.setVisible(false);
         remind2.setVisible(false);
         remind3.setVisible(false);
+        
+
+            
+
          
     }
     
     
     
     private void gotoLogin(){
-        new Login().setVisible(true);
-        new Home().dispose();
-        dispose();
-        
+        System.exit(0);
     }
     /**1)    <Validimi i perdoruesit>   */
     //Kontrollo nese perdoruesi egziston 
@@ -119,20 +118,33 @@ public class Home extends javax.swing.JFrame {
                     
           useri = userRepo.getUser(username, password); 
           city = useri.getCityId();
-          
-          //Nese perdoruesi ka te caktuar qytetin vazhdo me pjesen e motit 
-          if(city.getId()>0)
-            getWeatherLocaly();
-          else
-              gotoLogin();
-            
+        }catch(Exception e){
+          gotoLogin();
+      }  
 
+
+           
+           
+           try{
+               getWeatherLocaly();
+               getReminders();
+               
+               getWeatherOnline();
+               
+           }catch(Exception e){
+                refreshButton.doClick();
+           }
+    }
+    
+    /**2)    <Mer reminders>           */
+    private void getReminders(){
+        try{
            RemindersRepository remindersRep = new RemindersRepository();
            List<Reminders> r = remindersRep.getListOfReminders(useri);
            displayReminder(r);
-      }catch(Exception e){       
-            gotoLogin();
-      }
+        }catch(Exception e){
+            System.out.println(e);
+        }
     }
     
     
@@ -154,28 +166,44 @@ public class Home extends javax.swing.JFrame {
     
     /**4)    <Marrja e te dhenave lokalisht>    */
     //Mer te dhenat e motit lokalisht
-    private void getWeatherLocaly(){ 
+    private void getWeatherLocaly() throws Exception{ 
         Date date = new Date();
+        
         try {
         today = weatherRepo.getWeather(city,date);
-        dailyList = weatherRepo.getDailyWeather(city,date);
-        getWeatherOnline();
-        } catch (Exceptions ex) {
-         System.out.println("Get Weather Localy Error: "+ex);
+        //Merr motin lokalisht prej databaze dhe paraqite tek perdoruesi.
+        
+         displayTodayWeather(today.getCurrent() ,today.getDay(), today.getCond());//Merr motin ditor nga databaza dhe paraqite.
+         
+            
+      dailyList = weatherRepo.getDailyWeather(city,date);//Marrja e motit per Daly nga databaza.
+       int i=0;
+       //Per secilen daly[d] nga lista[dalylistt],Paraqit tek perdoruesi te dhenat e motit per ate dit.
+        //nt i tregon pozicionin e dites nese i-0 dita sitme nese i=1 dita e neserme.
+       //Daly d deklarohet e re dhe i jipen te dhenat nga lista.
+        
+     for(Daily d:dailyList)
+           {
+       displayDailyWeather(d.getDate(),d.getDay(),d.getCond(),d.getMax(),d.getMin(),i);
+        i++;
+           }
+        
+        } catch (Exception ex) {
+            throw new Exception(ex);
         }
     }
     
     
     /**5)    <Marrja e te dhenave Online>   */ 
     //Mer te dhenat e motit nga YahooWeather dhe ruaj ato lokalisht
-    private void getWeatherOnline(){ 
+    private void getWeatherOnline() throws Exception{  
         //Bashko hostin e URL me ID te qytetit dhe ne fund shto edhe konfigurimet [moti te kthehet si JSON Object]
         URL = URL_HOST + city.getZip() + URL_FOOTER; 
         try{
             JSONObject yahooWeather = weatherRepo.getYahooWeather(URL);
             parseJsonFeed(yahooWeather);
         }catch(IOException | JSONException e){
-            System.out.println("Get Weather Online Error: "+e);
+            throw new Exception(e);
         }
     }
     //Kthe nga JSON Objekt ne te dhena te gatshme per paraqitje dhe ruajtje
@@ -267,7 +295,7 @@ public class Home extends javax.swing.JFrame {
                     .getJSONArray("forecast");
             
             //mer 5 elementet e para te vargut [5 ditet e motit] 
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 6; i++) {
                 //Mer te dhenat e motit nga vargu specifikisht per diten e dhene [i]
                 // nese i=0, mer te dhenat e motit per diten e pare (sot)
                 // nese i=1, mer te dhenat e motit per diten e dyte (neser)
@@ -294,10 +322,10 @@ public class Home extends javax.swing.JFrame {
                                             (short) currentTemp,city);
             
             //Paraqit te dhenat e motit te sotem tek perdoruesi
-            displayTodayWeather(currentTemp,currentWind,currentDay,currentCondition);
+            displayTodayWeather(currentTemp,currentDay,currentCondition);
             
         }catch(JSONException | ParseException e){
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, e);
+            System.out.println(e);
         }
     }
     
@@ -307,55 +335,57 @@ public class Home extends javax.swing.JFrame {
     
     
     /**7)    <Shfaqja e te dhenave tek perdoruesi>    */
-    private void displayTodayWeather(int currentTemp,String currentWind,String currentDay,int currentCondition){
+    private void displayTodayWeather(int currentTemp,String currentDay,int currentCondition){
         //Paraqit ikonen, dergo kushtet e motit dhe diten e sotme [0 - dita e sotme]
         setIcon(String.valueOf(currentCondition),0);
         
-        System.out.println(
-        "Temp: "+currentTemp+"\n"+
-        "Wind: "+currentWind+"\n"+
-        "Day: "+currentDay+"\n"+
-        "Cond: "+currentCondition +"\n"       
-                );
+        todayL.setText(currentTemp+" °C");
+        todayDay.setText(currentDay);
+        
+              
     }
     private void displayDailyWeather(Date dailyDate,String dailyDay,short dailyCondition,short dailyMax,short dailyMin,int i) {
-        //Paraqit ikonen, dergo kushtet e motit dhe diten [(i=0) sot, (i=1) neser]
+    //Paraqit ikonen, dergo kushtet e motit dhe diten [(i=0) sot, (i=1) neser]
         setIcon(String.valueOf(dailyCondition),i);
-        
             switch (i){
                 case 0:
-                    /*day0.setText(Day);
-                    day0Min.setText(feedObj.getString("low"));
-                    day0Max.setText(feedObj.getString("high"));
-                    setIcon(i, code);*/
+                    day0name.setText(dailyDay);
+                    day0min.setText("Min. "+dailyMin+" °C");
+                    day0max.setText("Max. "+dailyMax+" °C");
+                    //setIcon(i, code);*/
                     break;
                 case 1:
-                    /*day1.setText(Day);
-                    day1Min.setText(feedObj.getString("low"));
-                    day1Max.setText(feedObj.getString("high"));
-                    setIcon(i, code);*/
+                    day1name.setText(dailyDay);
+                    day1min.setText("Min. "+dailyMin+" °C");
+                    day1max.setText("Max. "+dailyMax+" °C");
+                    /*setIcon(i, code);*/
                     break;
                 case 2:
-                    /* day2.setText(Day);
-                    day2Min.setText(feedObj.getString("low"));
-                    day2Max.setText(feedObj.getString("high"));
-                    setIcon(i, code);*/
+                    day2name.setText(dailyDay);
+                    day2min.setText("Min. "+dailyMin+" °C");
+                    day2max.setText("Max. "+dailyMax+" °C");
+                    /*setIcon(i, code);*/
                     break;
                 case 3:
-                    /*day3.setText(Day);
-                    day3Min.setText(feedObj.getString("low"));
-                    day3Max.setText(feedObj.getString("high"));
-                    setIcon(i, code);*/
+                    day3name.setText(dailyDay);
+                    day3min.setText("Min. "+dailyMin+" °C");
+                    day3max.setText("Max. "+dailyMax+" °C");
+                    /*setIcon(i, code);*/
                     break;
                 case 4:
-                    /* day4.setText(Day);
-                    day4Min.setText(feedObj.getString("low"));
-                    day4Max.setText(feedObj.getString("high"));
-                    setIcon(i, code);/*/
+                    day4name.setText(dailyDay);
+                    day4min.setText("Min. "+dailyMin+" °C");
+                    day4max.setText("Max. "+dailyMax+" °C");
+                    /*setIcon(i, code);/*/
                     break;
+                case 5:
+                    day5name.setText(dailyDay);
+                    day5min.setText("Min. "+dailyMin+" °C");
+                    day5max.setText("Max. "+dailyMax+" °C");
+                    /*setIcon(i, code);/*/
                 default:
                     break;
-        }
+            }
     }
     
     /**8)   <Shfaqja e ikonave>   */
@@ -479,15 +509,14 @@ public class Home extends javax.swing.JFrame {
         DateFormat df = new SimpleDateFormat("dd.MM.yyyy");
         String title="", description="", date="";
         int i=0;
+        
         for(Reminders reminder : r){
             title = reminder.getRemindersTitle();
             description = reminder.getRemindersDescription();
             date = df.format(reminder.getRemindersDate());
+            
                        
-            if(title.length()>33)
-                title = title.substring(0,30)+"...";
-            if(description.length()>175)
-                description = description.substring(0,170)+"...";
+            
             
             switch(i){
                 case 0:
@@ -520,12 +549,12 @@ public class Home extends javax.swing.JFrame {
                      
             }
             
-           if(reminder.getRemindersIsset()==1){
+           if(reminder.getRemindersIsset()){
             /*if(remindRepo.isWeatherFriendly(reminder))
                 System.out.println("a");*/
             
             }
-           
+           i++;
         }
         
     }
@@ -546,7 +575,6 @@ public class Home extends javax.swing.JFrame {
         day3name = new javax.swing.JLabel();
         day4icon = new javax.swing.JLabel();
         day4name = new javax.swing.JLabel();
-        dateToday = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
         todayL = new javax.swing.JLabel();
         day3min = new javax.swing.JLabel();
@@ -569,7 +597,6 @@ public class Home extends javax.swing.JFrame {
         day5max = new javax.swing.JLabel();
         day5min = new javax.swing.JLabel();
         todayDay = new javax.swing.JLabel();
-        timeToday = new javax.swing.JLabel();
         panelPortal = new javax.swing.JPanel();
         lajminetPanel = new javax.swing.JPanel();
         jScrollPane8 = new javax.swing.JScrollPane();
@@ -659,7 +686,6 @@ public class Home extends javax.swing.JFrame {
 
         day0name.setFont(new java.awt.Font("Calibri", 0, 24)); // NOI18N
         day0name.setForeground(new java.awt.Color(255, 255, 255));
-        day0name.setText("E DIELL");
         motiPanel.add(day0name, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 30, -1, -1));
 
         day2icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Partly Cloudy Rain_49px.png"))); // NOI18N
@@ -667,7 +693,6 @@ public class Home extends javax.swing.JFrame {
 
         day2name.setFont(new java.awt.Font("Calibri", 0, 24)); // NOI18N
         day2name.setForeground(new java.awt.Color(255, 255, 255));
-        day2name.setText("E MARTE");
         motiPanel.add(day2name, new org.netbeans.lib.awtextra.AbsoluteConstraints(500, 30, -1, -1));
 
         day3icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Fog Day_49px.png"))); // NOI18N
@@ -675,7 +700,6 @@ public class Home extends javax.swing.JFrame {
 
         day3name.setFont(new java.awt.Font("Calibri", 0, 24)); // NOI18N
         day3name.setForeground(new java.awt.Color(255, 255, 255));
-        day3name.setText("E MERKURE");
         motiPanel.add(day3name, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 30, -1, -1));
 
         day4icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/bore_me_shi.png"))); // NOI18N
@@ -683,35 +707,25 @@ public class Home extends javax.swing.JFrame {
 
         day4name.setFont(new java.awt.Font("Calibri", 0, 24)); // NOI18N
         day4name.setForeground(new java.awt.Color(255, 255, 255));
-        day4name.setText("E EJTE");
         motiPanel.add(day4name, new org.netbeans.lib.awtextra.AbsoluteConstraints(790, 30, -1, -1));
-
-        dateToday.setFont(new java.awt.Font("Calibri", 1, 16)); // NOI18N
-        dateToday.setForeground(new java.awt.Color(255, 255, 255));
-        dateToday.setText("06 Maj 2017");
-        motiPanel.add(dateToday, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 130, -1, -1));
 
         jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
         motiPanel.add(jSeparator1, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 20, -1, 130));
 
         todayL.setFont(new java.awt.Font("Calibri", 0, 52)); // NOI18N
         todayL.setForeground(new java.awt.Color(255, 255, 255));
-        todayL.setText("16 °C");
         motiPanel.add(todayL, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 20, -1, -1));
 
         day3min.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day3min.setForeground(new java.awt.Color(255, 255, 255));
-        day3min.setText("Min. 10 °C");
         motiPanel.add(day3min, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 110, -1, -1));
 
         day3max.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day3max.setForeground(new java.awt.Color(255, 255, 255));
-        day3max.setText("Max. 16 °C");
         motiPanel.add(day3max, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 130, -1, -1));
 
         day1name.setFont(new java.awt.Font("Calibri", 0, 24)); // NOI18N
         day1name.setForeground(new java.awt.Color(255, 255, 255));
-        day1name.setText("E HENE");
         motiPanel.add(day1name, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 30, -1, -1));
 
         day0icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Sun_49px.png"))); // NOI18N
@@ -719,49 +733,42 @@ public class Home extends javax.swing.JFrame {
 
         day4min.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day4min.setForeground(new java.awt.Color(255, 255, 255));
-        day4min.setText("Min. 10 °C");
         motiPanel.add(day4min, new org.netbeans.lib.awtextra.AbsoluteConstraints(800, 110, -1, 20));
 
         day4max.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day4max.setForeground(new java.awt.Color(255, 255, 255));
-        day4max.setText("Max. 16 °C");
         motiPanel.add(day4max, new org.netbeans.lib.awtextra.AbsoluteConstraints(800, 130, -1, -1));
 
         day2min.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day2min.setForeground(new java.awt.Color(255, 255, 255));
-        day2min.setText("Min. 10 °C");
         motiPanel.add(day2min, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 110, -1, 20));
 
         day2max.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day2max.setForeground(new java.awt.Color(255, 255, 255));
-        day2max.setText("Max. 16 °C");
         motiPanel.add(day2max, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 130, -1, -1));
 
         day1min.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day1min.setForeground(new java.awt.Color(255, 255, 255));
-        day1min.setText("Min. 10 °C");
         motiPanel.add(day1min, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 110, -1, 20));
 
         day1max.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day1max.setForeground(new java.awt.Color(255, 255, 255));
-        day1max.setText("Max. 16 °C");
         motiPanel.add(day1max, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 130, -1, -1));
 
         day0min.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day0min.setForeground(new java.awt.Color(255, 255, 255));
-        day0min.setText("Min. 10 °C");
         motiPanel.add(day0min, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 110, -1, 20));
 
         day0max.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day0max.setForeground(new java.awt.Color(255, 255, 255));
-        day0max.setText("Max. 16 °C");
         motiPanel.add(day0max, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 130, -1, -1));
 
         todayIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Partly Cloudy Day_49px.png"))); // NOI18N
         motiPanel.add(todayIcon, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 70, -1, -1));
 
         refreshButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Refresh_25px.png"))); // NOI18N
-        refreshButton.setBorder(null);
+        refreshButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        refreshButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         refreshButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 refreshButtonActionPerformed(evt);
@@ -769,8 +776,8 @@ public class Home extends javax.swing.JFrame {
         });
         motiPanel.add(refreshButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, -1, -1));
         jButton2.setOpaque(false);
-        refreshButton.setBackground(new Color(0, 0, 0, 20));
-        refreshButton.setForeground(new Color(0, 0, 0, 20));
+        refreshButton.setBackground(new Color(0, 0, 0, 0));
+        refreshButton.setForeground(new Color(0, 0, 0, 0));
 
         jSeparator10.setForeground(new java.awt.Color(255, 255, 255));
         jSeparator10.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -779,31 +786,22 @@ public class Home extends javax.swing.JFrame {
 
         day5name.setFont(new java.awt.Font("Calibri", 0, 24)); // NOI18N
         day5name.setForeground(new java.awt.Color(255, 255, 255));
-        day5name.setText("E PREMTE");
-        motiPanel.add(day5name, new org.netbeans.lib.awtextra.AbsoluteConstraints(920, 30, -1, -1));
+        motiPanel.add(day5name, new org.netbeans.lib.awtextra.AbsoluteConstraints(910, 30, -1, -1));
 
         day5icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Cloud_49px.png"))); // NOI18N
         motiPanel.add(day5icon, new org.netbeans.lib.awtextra.AbsoluteConstraints(930, 60, -1, -1));
 
         day5max.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day5max.setForeground(new java.awt.Color(255, 255, 255));
-        day5max.setText("Max. 16 °C");
         motiPanel.add(day5max, new org.netbeans.lib.awtextra.AbsoluteConstraints(930, 130, -1, 20));
 
         day5min.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day5min.setForeground(new java.awt.Color(255, 255, 255));
-        day5min.setText("Min. 10 °C");
         motiPanel.add(day5min, new org.netbeans.lib.awtextra.AbsoluteConstraints(930, 110, -1, 20));
 
         todayDay.setFont(new java.awt.Font("Calibri", 1, 16)); // NOI18N
         todayDay.setForeground(new java.awt.Color(255, 255, 255));
-        todayDay.setText("E Shtune ,");
-        motiPanel.add(todayDay, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 130, -1, -1));
-
-        timeToday.setFont(new java.awt.Font("sansserif", 1, 14)); // NOI18N
-        timeToday.setForeground(new java.awt.Color(255, 255, 255));
-        timeToday.setText("-  -  - ");
-        motiPanel.add(timeToday, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 150, 80, 20));
+        motiPanel.add(todayDay, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 130, -1, -1));
 
         jPanel12.add(motiPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 540, 1040, 170));
 
@@ -1185,9 +1183,15 @@ public class Home extends javax.swing.JFrame {
 
         jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Plus_50px.png"))); // NOI18N
         jButton3.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        jButton3.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
         remanderPanel.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 650, 40, 40));
         jButton3.setOpaque(false);
-        jButton3.setBackground(new Color(0, 0, 0, 20));
+        jButton3.setBackground(new Color(0, 0, 0, 00));
         jButton3.setForeground(new Color(0, 0, 0, 20));
 
         jButton4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Settings_28px.png"))); // NOI18N
@@ -1379,7 +1383,7 @@ public class Home extends javax.swing.JFrame {
 
         jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/More_30px.png"))); // NOI18N
         jButton2.setBorder(javax.swing.BorderFactory.createTitledBorder(""));
-        remanderPanel.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 550, -1, 20));
+        remanderPanel.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 550, -1, 20));
         jButton2.setOpaque(false);
         jButton2.setBackground(new Color(0, 0, 0, 20));
         jButton2.setForeground(new Color(0, 0, 0, 20));
@@ -1571,14 +1575,27 @@ public class Home extends javax.swing.JFrame {
         // TODO add your handling code here:
         try
         {
-            getWeatherLocaly();
-            System.out.println("Refresh Sucessful");
-
+            getWeatherOnline();
+            getReminders();
+            JOptionPane.showMessageDialog(this, "Moti u perditesua me sukses !");
         }
         catch(Exception e){
-            System.out.println("Refresh error");
+            try{
+            getWeatherLocaly();
+            }catch(Exception ex){
+            JOptionPane.showMessageDialog(this, "Nuk ka te dhena te motit te ruajtura lokalisht !");
+            }
+         JOptionPane.showMessageDialog(this, "Lidhja me serverin deshtoi !\nKontrolloni lidhjen e internetit !");
         }
     }//GEN-LAST:event_refreshButtonActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        AddReg adreg = new AddReg();
+        adreg.setVisible(true);
+        adreg.checkUser(useri.getUsername(),useri.getPassword());
+        
+        this.dispose();
+    }//GEN-LAST:event_jButton3ActionPerformed
 
 
     public static void main(String args[]) {
@@ -1621,7 +1638,6 @@ public class Home extends javax.swing.JFrame {
    
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel dateToday;
     private javax.swing.JLabel day0icon;
     private javax.swing.JLabel day0max;
     private javax.swing.JLabel day0min;
@@ -1722,7 +1738,6 @@ public class Home extends javax.swing.JFrame {
     private javax.swing.JTextArea shareTextArea2;
     private javax.swing.JTextArea shareTextArea3;
     private javax.swing.JPanel telegrafPanel;
-    private javax.swing.JLabel timeToday;
     private javax.swing.JLabel todayDay;
     private javax.swing.JLabel todayIcon;
     private javax.swing.JLabel todayL;

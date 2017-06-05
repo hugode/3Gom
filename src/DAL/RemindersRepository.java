@@ -107,11 +107,7 @@ public class RemindersRepository extends EntityManagerClass{
                 
                 }//FOR
         }catch(Exceptions e){
-            throw new Exceptions("Exceptions e"+e.getMessage());
-        }catch(JSONException e){
-            throw new Exceptions("JSONException e"+e.getMessage());
-        }catch(ParseException e){
-            throw new Exceptions("ParseException e"+e.getMessage());
+            System.out.println("RemindersRepository err: "+e.getMessage());
         }
     }
     private JSONObject getWeather(int cityId)throws Exceptions{

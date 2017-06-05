@@ -8,8 +8,15 @@ package GUI;
 import BL.City;
 import BL.Reminders;
 import BL.Users;
+import DAL.Exceptions;
 import DAL.RemindersRepository;
 import DAL.UsersRepository;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -18,9 +25,9 @@ import DAL.UsersRepository;
 public class AddReg extends javax.swing.JFrame {
     UsersRepository userRepo = new UsersRepository();
     RemindersRepository remindRepo = new RemindersRepository();
-    Users user = null;
-    
-    City user_city = new City();
+    Users user = new Users();;
+    boolean isset = false;
+
     /**
      * Creates new form AddReg
      */
@@ -28,21 +35,24 @@ public class AddReg extends javax.swing.JFrame {
         initComponents();
         this.setLocationRelativeTo(null);
         condJlabel.setVisible(false);
-        condition.setVisible(false);
         cityText.setVisible(false);
         celsious.setVisible(false);
         temp.setVisible(false);
         jseperatorTemp.setVisible(false);
         celsious.setVisible(false);
-        tempJlabel1.setVisible(false);
         city.setVisible(false);
         cityBorder.setVisible(false);
     }
     
     public void checkUser(String username, String password){
+        try{
+            
         user.setUsername(username);
         user.setPassword(password);
-        user_city = user.getCityId();
+
+        }catch(Exception e){
+            System.exit(0);
+        }
     }
 
     /**
@@ -67,7 +77,6 @@ public class AddReg extends javax.swing.JFrame {
         temp = new javax.swing.JTextField();
         jseperatorTemp = new javax.swing.JSeparator();
         celsious = new javax.swing.JLabel();
-        condition = new javax.swing.JComboBox();
         dateYear = new javax.swing.JTextField();
         jSeparator3 = new javax.swing.JSeparator();
         addWeather = new javax.swing.JButton();
@@ -78,12 +87,12 @@ public class AddReg extends javax.swing.JFrame {
         jSeparator4 = new javax.swing.JSeparator();
         dateDay = new javax.swing.JTextField();
         cityText = new javax.swing.JLabel();
-        tempJlabel1 = new javax.swing.JLabel();
+        shared = new javax.swing.JCheckBox();
         jLabel8 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setMaximumSize(new java.awt.Dimension(400, 570));
-        setMinimumSize(new java.awt.Dimension(400, 570));
+        setMaximumSize(new java.awt.Dimension(400, 520));
+        setMinimumSize(new java.awt.Dimension(400, 520));
         setResizable(false);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
@@ -103,7 +112,7 @@ public class AddReg extends javax.swing.JFrame {
                 addWeather1ActionPerformed(evt);
             }
         });
-        getContentPane().add(addWeather1, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 500, -1, -1));
+        getContentPane().add(addWeather1, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 440, -1, -1));
 
         addReminder.setBackground(new java.awt.Color(102, 153, 0));
         addReminder.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
@@ -121,7 +130,7 @@ public class AddReg extends javax.swing.JFrame {
                 addReminderActionPerformed(evt);
             }
         });
-        getContentPane().add(addReminder, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 500, -1, -1));
+        getContentPane().add(addReminder, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 440, -1, -1));
 
         city.setBackground(new java.awt.Color(0, 0, 0, 0));
         city.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
@@ -134,8 +143,8 @@ public class AddReg extends javax.swing.JFrame {
                 cityActionPerformed(evt);
             }
         });
-        getContentPane().add(city, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 400, 140, 20));
-        getContentPane().add(cityBorder, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 420, 140, 10));
+        getContentPane().add(city, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 360, 140, 20));
+        getContentPane().add(cityBorder, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 380, 140, 10));
         getContentPane().add(jSeparator1, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 80, 220, 10));
 
         title.setBackground(new java.awt.Color(0, 0, 0, 0));
@@ -182,26 +191,14 @@ public class AddReg extends javax.swing.JFrame {
                 tempActionPerformed(evt);
             }
         });
-        getContentPane().add(temp, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 370, 50, 20));
-        getContentPane().add(jseperatorTemp, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 390, 50, 10));
+        getContentPane().add(temp, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 340, 50, 20));
+        getContentPane().add(jseperatorTemp, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 360, 50, 10));
 
         celsious.setBackground(new java.awt.Color(32, 33, 35));
         celsious.setFont(new java.awt.Font("Calibri", 1, 18)); // NOI18N
         celsious.setForeground(new java.awt.Color(255, 255, 255));
         celsious.setText("°C");
-        getContentPane().add(celsious, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 370, -1, -1));
-
-        condition.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Me Diell", "Me Shi", "Me Bore", "Me Bresher", "Me Fryme" }));
-        condition.setMaximumSize(new java.awt.Dimension(56, 18));
-        condition.setMinimumSize(new java.awt.Dimension(56, 18));
-        condition.setName(""); // NOI18N
-        condition.setPreferredSize(new java.awt.Dimension(56, 18));
-        condition.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                conditionActionPerformed(evt);
-            }
-        });
-        getContentPane().add(condition, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 330, 130, 30));
+        getContentPane().add(celsious, new org.netbeans.lib.awtextra.AbsoluteConstraints(360, 340, -1, -1));
 
         dateYear.setBackground(new java.awt.Color(0, 0, 0, 0));
         dateYear.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
@@ -264,7 +261,7 @@ public class AddReg extends javax.swing.JFrame {
         condJlabel.setBackground(new java.awt.Color(32, 33, 35));
         condJlabel.setFont(new java.awt.Font("Calibri", 1, 18)); // NOI18N
         condJlabel.setForeground(new java.awt.Color(255, 255, 255));
-        condJlabel.setText("Nese kushtet e motit jane:");
+        condJlabel.setText("Nese temperatura eshte me lartë se:");
         getContentPane().add(condJlabel, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 340, -1, -1));
 
         jSeparator4.setForeground(new java.awt.Color(255, 255, 255));
@@ -288,19 +285,18 @@ public class AddReg extends javax.swing.JFrame {
         cityText.setFont(new java.awt.Font("Calibri", 1, 18)); // NOI18N
         cityText.setForeground(new java.awt.Color(255, 255, 255));
         cityText.setText("ne Qytetin:");
-        getContentPane().add(cityText, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 400, -1, -1));
+        getContentPane().add(cityText, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 360, -1, -1));
 
-        tempJlabel1.setBackground(new java.awt.Color(32, 33, 35));
-        tempJlabel1.setFont(new java.awt.Font("Calibri", 1, 18)); // NOI18N
-        tempJlabel1.setForeground(new java.awt.Color(255, 255, 255));
-        tempJlabel1.setText("dhe temperatura eshte me lartë se:");
-        getContentPane().add(tempJlabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 370, -1, -1));
+        shared.setForeground(new java.awt.Color(255, 255, 255));
+        shared.setText("Publike");
+        shared.setOpaque(false);
+        getContentPane().add(shared, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 60, 90, -1));
 
         jLabel8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/WDF_778052.jpg"))); // NOI18N
         jLabel8.setMaximumSize(new java.awt.Dimension(450, 300));
         jLabel8.setMinimumSize(new java.awt.Dimension(450, 300));
         jLabel8.setPreferredSize(new java.awt.Dimension(450, 300));
-        getContentPane().add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 400, 570));
+        getContentPane().add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 400, 520));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -309,49 +305,101 @@ public class AddReg extends javax.swing.JFrame {
 
     private void addWeatherActionPerformed(java.awt.event.ActionEvent evt) {
         condJlabel.setVisible(true);
-        condition.setVisible(true);
         celsious.setVisible(true);
         temp.setVisible(true);
         jseperatorTemp.setVisible(true);
         celsious.setVisible(true);
         cityText.setVisible(true);
-        tempJlabel1.setVisible(true);
         city.setVisible(true);
         cityBorder.setVisible(true);
         addWeather.setVisible(false);
         
+        isset = true;
     }
 
 
     private void addWeather1ActionPerformed(java.awt.event.ActionEvent evt) {
-        Home h = new Home();
-        h.setVisible(true);
-        this.dispose();
+                
+        try {
+            Home h = new Home();
+            h.checkUser(user.getUsername(), user.getPassword());
+            h.setVisible(true);
+            dispose();
+        } catch (Exception ex) {
+            System.exit(0);
+        }
+                
     }
     
-    private void addReminderActionPerformed(java.awt.event.ActionEvent evt) {
+
+    private void addReminderActionPerformed(java.awt.event.ActionEvent evt){
         //String title,desc,dateDay,dateMonth,dateYear;
         String reminderTitle = title.getText();
         String reminderDesc = desc.getText();
         String reminderDay = dateDay.getText();
         String reminderMonth = (String) dateMonth.getSelectedItem();
+        reminderMonth = userRepo.monthString(reminderMonth);
         String reminderYear = dateYear.getText();
-        System.out.println(reminderMonth);
+        String reminderTemp = temp.getText();
+        Short temp = null;
+        
+        boolean share = shared.isSelected();
+
+        
+        Date date = null;
+        Date today = new Date();
+        DateFormat df = new SimpleDateFormat("dd MM yyyy");
         
         
-        if(reminderTitle.length()>3 && reminderDay.length()>1 && reminderYear.length()>1){
+        try{
+            date = df.parse(reminderDay+" "+reminderMonth+" "+reminderYear);
+        }catch(Exception e){
+            JOptionPane.showMessageDialog(this, "Data nuk lejohet ne kete format !");
+            return;
+        }
+        
+
+
+ 
+        
+        if(date.before(today)){
+           JOptionPane.showMessageDialog(this, "Data duhet te jete ne ditet ne vijim !");
+            
+        }else{
+        
             try{
                 Reminders r = new Reminders();
+
+                r.setRemindersCity(1);
+                r.setRemindersDate(date);
+                r.setRemindersTitle(reminderTitle);
+                r.setRemindersDescription(reminderDesc);
+                r.setRemindersShared(share);
+                if(isset){
+                try{
+                    temp = Short.parseShort(reminderTemp);
+                    if(temp<-60 || temp>60)
+                        throw new Exception();
+                }catch(Exception e){
+                    JOptionPane.showMessageDialog(this, "Temperatura nuk lejohet ne kete format !");
+                    return;            
+                }
+                r.setRemindersHigher(temp);
+                r.setRemindersIsset(true);
+                }
                 
-                r.setRemindersCity(user_city.getId());
-                r.setRemindersDate(null);
+                r.setRemindersUser(user.getUsername());
+               
                 
                 remindRepo.addReminder(r);
+                JOptionPane.showMessageDialog(this, "Reminder u shtua me sukses !");
+                Home h = new Home();
+                h.checkUser(user.getUsername(), user.getPassword());
+                h.setVisible(true);
+                dispose();
             }catch(Exception e){
                 System.out.println(e);
             }
-        }else{
-            System.out.println("Plotesoni te gjitha rubrikat ju lutem !");
         }
         
     }
@@ -411,7 +459,6 @@ public class AddReg extends javax.swing.JFrame {
     private javax.swing.JSeparator cityBorder;
     private javax.swing.JLabel cityText;
     private javax.swing.JLabel condJlabel;
-    private javax.swing.JComboBox condition;
     private javax.swing.JTextField dateDay;
     private javax.swing.JComboBox dateMonth;
     private javax.swing.JTextField dateYear;
@@ -426,8 +473,8 @@ public class AddReg extends javax.swing.JFrame {
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JSeparator jSeparator4;
     private javax.swing.JSeparator jseperatorTemp;
+    private javax.swing.JCheckBox shared;
     private javax.swing.JTextField temp;
-    private javax.swing.JLabel tempJlabel1;
     private javax.swing.JTextField title;
     // End of variables declaration//GEN-END:variables
 }

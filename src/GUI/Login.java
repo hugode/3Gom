@@ -57,7 +57,7 @@ public class Login extends javax.swing.JFrame {
           Home home = new Home();
           home.setVisible(true);
           home.checkUser(u.getUsername(), u.getPassword());
-          this.dispose();
+          dispose();
           }catch(Exception e){       
           JOptionPane.showMessageDialog(this, e.getMessage());
           username.setText("");

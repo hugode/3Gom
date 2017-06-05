@@ -47,7 +47,7 @@ public class WeatherRepository extends EntityManagerClass{
         public List<Daily>  getDailyWeather(City c, Date d)throws  Exceptions{
         Query query = em.createQuery("SELECT d FROM Daily d WHERE d.cityId=:id AND"
                 + " d.date>=:date "
-                + "ORDER BY d.dailyId DESC").setMaxResults(5);
+                + "ORDER BY d.dailyId ").setMaxResults(6);
         query.setParameter("id", c);
         query.setParameter("date", d);
         
