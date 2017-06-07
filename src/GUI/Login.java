@@ -119,7 +119,7 @@ public class Login extends javax.swing.JFrame {
         jLabel6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/Tregom.png"))); // NOI18N
         jPanel2.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 220, -1, -1));
 
-        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/Partly Cloudy Day_80px.png"))); // NOI18N
+        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/ICO/mot_me_re.png"))); // NOI18N
         jPanel2.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 120, -1, -1));
 
         jLabel8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/Todo List_80px.png"))); // NOI18N
@@ -139,7 +139,6 @@ public class Login extends javax.swing.JFrame {
 
         jLabel7.setFont(new java.awt.Font("Calibri", 1, 36)); // NOI18N
         jLabel7.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel7.setText("KYÇU");
         jPanel2.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 60, -1, -1));
 
         username.setBackground(new java.awt.Color(241, 249, 252));

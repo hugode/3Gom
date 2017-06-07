@@ -467,7 +467,7 @@ return true;
         jLabel12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Todo List_80px.png"))); // NOI18N
         jPanel1.add(jLabel12, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 120, -1, -1));
 
-        jLabel10.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Partly Cloudy Day_80px.png"))); // NOI18N
+        jLabel10.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/ICO/mot_me_re.png"))); // NOI18N
         jPanel1.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 120, -1, -1));
 
         jSeparator6.setForeground(new java.awt.Color(255, 255, 255));

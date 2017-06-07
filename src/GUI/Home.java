@@ -12,6 +12,8 @@ import DAL.WeatherRepository;
 import DAL.RemindersRepository;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.sql.Time;
 import java.text.DateFormat;
@@ -93,7 +95,7 @@ public class Home extends javax.swing.JFrame {
         remind1.setOpaque(false);
         remind2.setOpaque(false);
         remind3.setOpaque(false);
-        share3panel.setOpaque(false);
+        share2panel.setOpaque(false);
         
         remind0.setVisible(false);
         remind1.setVisible(false);
@@ -121,10 +123,6 @@ public class Home extends javax.swing.JFrame {
         }catch(Exception e){
           gotoLogin();
       }  
-
-
-           
-           
            try{
                getWeatherLocaly();
                getReminders();
@@ -139,13 +137,23 @@ public class Home extends javax.swing.JFrame {
     /**2)    <Mer reminders>           */
     private void getReminders(){
         try{
-           RemindersRepository remindersRep = new RemindersRepository();
-           List<Reminders> r = remindersRep.getListOfReminders(useri);
-           displayReminder(r);
+           RemindersRepository remindersRepo = new RemindersRepository();
+           List<Reminders> reminder = remindersRepo.getListOfReminders(useri);
+           List<Reminders> sharedReminder = remindersRepo.getSharedReminders(useri);
+           
+           for(Reminders r: reminder)
+               System.out.println(r);
+           
+           displayReminder(reminder);
+           displaySharedReminders(sharedReminder);
+           
+           
         }catch(Exception e){
-            System.out.println(e);
+            System.out.println("getReminders()"+e);
         }
     }
+    /**2.1) <Mer SHARED Reminders>  */
+    
     
     
     /**3)    <Pastrim i databazes>    */
@@ -199,6 +207,7 @@ public class Home extends javax.swing.JFrame {
     private void getWeatherOnline() throws Exception{  
         //Bashko hostin e URL me ID te qytetit dhe ne fund shto edhe konfigurimet [moti te kthehet si JSON Object]
         URL = URL_HOST + city.getZip() + URL_FOOTER; 
+        System.out.println(URL);
         try{
             JSONObject yahooWeather = weatherRepo.getYahooWeather(URL);
             parseJsonFeed(yahooWeather);
@@ -310,8 +319,8 @@ public class Home extends javax.swing.JFrame {
                 dailyMax = (short) getDailyWeatherByDay.getInt("high");
                 dailyMin = (short) getDailyWeatherByDay.getInt("low");
                 //Ruaj te dhenat e motit lokalisht  
-                weatherRepo.updateDailyWeatherInLocalhost(dailyDate, dailyDay, dailyCondition, dailyMax, dailyMin,city);
                 //Paraqit te dhenat e motit ditor tek perdoruesi ne baze te renditjes [(i=0) - pozita 1]
+                System.out.println(i);
                 displayDailyWeather(dailyDate,dailyDay,dailyCondition,dailyMax,dailyMin,i);
             }
             
@@ -325,7 +334,7 @@ public class Home extends javax.swing.JFrame {
             displayTodayWeather(currentTemp,currentDay,currentCondition);
             
         }catch(JSONException | ParseException e){
-            System.out.println(e);
+            System.out.println("parseJsonFeed(..) "+e);
         }
     }
     
@@ -338,7 +347,6 @@ public class Home extends javax.swing.JFrame {
     private void displayTodayWeather(int currentTemp,String currentDay,int currentCondition){
         //Paraqit ikonen, dergo kushtet e motit dhe diten e sotme [0 - dita e sotme]
         setIcon(String.valueOf(currentCondition),0);
-        
         todayL.setText(currentTemp+" °C");
         todayDay.setText(currentDay);
         
@@ -346,46 +354,43 @@ public class Home extends javax.swing.JFrame {
     }
     private void displayDailyWeather(Date dailyDate,String dailyDay,short dailyCondition,short dailyMax,short dailyMin,int i) {
     //Paraqit ikonen, dergo kushtet e motit dhe diten [(i=0) sot, (i=1) neser]
-        setIcon(String.valueOf(dailyCondition),i);
+        
+        System.out.println(i);
             switch (i){
                 case 0:
                     day0name.setText(dailyDay);
                     day0min.setText("Min. "+dailyMin+" °C");
                     day0max.setText("Max. "+dailyMax+" °C");
-                    //setIcon(i, code);*/
                     break;
                 case 1:
                     day1name.setText(dailyDay);
                     day1min.setText("Min. "+dailyMin+" °C");
                     day1max.setText("Max. "+dailyMax+" °C");
-                    /*setIcon(i, code);*/
                     break;
                 case 2:
                     day2name.setText(dailyDay);
                     day2min.setText("Min. "+dailyMin+" °C");
                     day2max.setText("Max. "+dailyMax+" °C");
-                    /*setIcon(i, code);*/
                     break;
                 case 3:
                     day3name.setText(dailyDay);
                     day3min.setText("Min. "+dailyMin+" °C");
                     day3max.setText("Max. "+dailyMax+" °C");
-                    /*setIcon(i, code);*/
                     break;
                 case 4:
                     day4name.setText(dailyDay);
                     day4min.setText("Min. "+dailyMin+" °C");
                     day4max.setText("Max. "+dailyMax+" °C");
-                    /*setIcon(i, code);/*/
                     break;
                 case 5:
                     day5name.setText(dailyDay);
                     day5min.setText("Min. "+dailyMin+" °C");
                     day5max.setText("Max. "+dailyMax+" °C");
-                    /*setIcon(i, code);/*/
                 default:
                     break;
             }
+            setIcon(String.valueOf(dailyCondition),++i);
+            
     }
     
     /**8)   <Shfaqja e ikonave>   */
@@ -394,65 +399,70 @@ public class Home extends javax.swing.JFrame {
         String iconSource;
         short backgroundCode;
                 if (code.matches("0|1|2")) {
-                    iconSource = "mot_me_ere.ico";
+                    iconSource = "mot_me_ere.png";
                     backgroundCode = 0;
                 } else if (code.matches("3|4|37|38|39")) {
-                    iconSource = "vetetima.ico";
+                    iconSource = "vetetima.png";
                     backgroundCode = 1;
                 } else if (code.matches("5|6|7|25")) {
-                    iconSource = "bore_me_shi.ico";
+                    iconSource = "bore_me_shi.png";
                     backgroundCode = 2;
                 } else if (code.matches("9|10")) {
-                    iconSource = "ngrice.ico";
+                    iconSource = "ngrice.png";
                     backgroundCode = 3;
                 } else if (code.matches("47|45|10|11|12|37|38|39")) {
-                    iconSource = "rrebesh.ico";
+                    iconSource = "rrebesh.png";
                     backgroundCode = 4;
                 } else if (code.matches("13|14|15|16|17|18|46|41|42|43")) {
-                    iconSource = "bore.ico";
+                    iconSource = "bore.png";
                     backgroundCode = 5;
                 } else if (code.matches("19|20|21|22|23|24")) {
-                    iconSource = "mjegull.ico";
+                    iconSource = "mjegull.png";
                     backgroundCode = 6;
                 } else if (code.matches("26|27|28|29|30|44")) {
-                    iconSource = "mot_me_re.ico";
+                    iconSource = "mot_me_re.png";
                     backgroundCode = 7;
                 } else if (code.matches("31|32|33|34|36")) {
-                    iconSource = "mot_me_diell.ico";
+                    iconSource = "mot_me_diell.png";
                     backgroundCode = 8;
                 } else if (code.matches("35")) {
-                    iconSource = "riga_lokale_shiu.ico";
+                    iconSource = "riga_lokale_shiu.png";
                     backgroundCode = 9;
                 } else {
-                    iconSource = "erro_404.ico";
+                    iconSource = "riga_lokale_shiu.png";
                     backgroundCode = 10;
                 }
                 if(i==0) setBackground(backgroundCode);
+                
                 displayIcon(iconSource, i);
     }
     //Paraqit ikonen e dhene [iconSource] tek pozicioni i caktuar 
     //  [(i=0) Moti aktuar, (i=1,2,3) Moti ditor]
     private void displayIcon(String iconSource, int i){
+        System.out.println(iconSource+" --- "+i);
         switch(i){
             case 0:
-                //icon0.setIcon(iconSource)
+                
+                todayIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/ICO/"+iconSource)));
                 break;
             case 1:
-                //icon1.setIcon(iconSource)
+                day0icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/ICO/"+iconSource)));
                 break; 
             case 2:
-                //icon2.setIcon(iconSource)
+                day1icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/ICO/"+iconSource)));
                 break;
             case 3:
-                //icon3.setIcon(iconSource)
+                day2icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/ICO/"+iconSource)));
                 break;
             case 4:
-                //icon4.setIcon(iconSource)
+                day3icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/ICO/"+iconSource)));
                 break;
             case 5:
-                //icon5.setIcon(iconSource)
+                day4icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/ICO/"+iconSource)));
                 break;
             default:
+                day5icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/ICO/"+iconSource)));
+
                 break; 
         }
     }
@@ -515,8 +525,10 @@ public class Home extends javax.swing.JFrame {
             description = reminder.getRemindersDescription();
             date = df.format(reminder.getRemindersDate());
             
-                       
-            
+            if(title.length()>33)
+                title = title.substring(0,30)+"...";
+            if(description.length()>175)
+                description = description.substring(0,170)+"...";           
             
             switch(i){
                 case 0:
@@ -524,42 +536,195 @@ public class Home extends javax.swing.JFrame {
                     remind0text.setText(description);
                     remind0date.setText(date);
                     remind0.setVisible(true);
+                    setOnClickListener(reminder.getRemindersId(),i);
+                    if(reminder.getRemindersIsset())
+                        if(remindRepo.isWeatherFriendly(reminder))
+                            remind3.setBackground(new Color(0.3f, 0.69f, 0.31f, 0.5f));
                     break;
                 case 1:
                     remind1title.setText(title);
                     remind1text.setText(description);
                     remind1date.setText(date);
                     remind1.setVisible(true);
+                    setOnClickListener(reminder.getRemindersId(),i);
+                    if(reminder.getRemindersIsset())
+                        if(remindRepo.isWeatherFriendly(reminder))
+                            remind1.setBackground(new Color(0.3f, 0.69f, 0.31f, 0.5f));
                     break;
                 case 2:
                     remind2title.setText(title);
                     remind2text.setText(description);
                     remind2date.setText(date);
                     remind2.setVisible(true);
+                    setOnClickListener(reminder.getRemindersId(),i);
+                   if(reminder.getRemindersIsset())
+                        if(remindRepo.isWeatherFriendly(reminder))
+                            remind2.setBackground(new Color(0.3f, 0.69f, 0.31f, 0.5f));
                     break;                    
                 case 3:
                     remind3title.setText(title);
                     remind3text.setText(description);
                     remind3date.setText(date);
                     remind3.setVisible(true);
-                    break;                    
-                    
-                    
-                    
-                     
+                    setOnClickListener(reminder.getRemindersId(),i);
+                    if(reminder.getRemindersIsset())
+                        if(remindRepo.isWeatherFriendly(reminder))
+                            remind3.setBackground(new Color(0.3f, 0.69f, 0.31f, 0.5f));
+                    break; 
+                default:
+                        break;
             }
-            
-           if(reminder.getRemindersIsset()){
-            /*if(remindRepo.isWeatherFriendly(reminder))
-                System.out.println("a");*/
-            
-            }
+           
            i++;
+        }
+    }
+    
+    /**10.1)    <Display SharedReminders>   */
+    private void displaySharedReminders(List<Reminders> r){
+        String title="", description="";
+        int i=0;
+        for(Reminders reminder : r){
+            title = reminder.getRemindersTitle();
+            description = reminder.getRemindersDescription();
+            
+            if(title.length()>33)
+                title = title.substring(0,30)+"...";
+            if(description.length()>133)
+                description = description.substring(0,130)+"...";           
+            
+            switch(i){
+                case 0:
+                    share0panel.setVisible(true);
+                    shared0ReminderTitle.setText(title);
+                    shared0ReminderDesc.setText(description);
+                    break;
+                case 1:
+                    share1panel.setVisible(true);
+                    shared1ReminderTitle.setText(title);
+                    shared1ReminderDesc.setText(description);                   
+                    break;
+                case 2:
+                    share2panel.setVisible(true);
+                    shared2ReminderTitle.setText(title);
+                    shared2ReminderDesc.setText(description);
+                    break;
+            }
+            
+            
+            
         }
         
     }
-   
-
+    
+    private void setOnClickListener(final int id, int position){
+        switch(position){
+            case 0:
+                remind0.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+                remind0title.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+                remind0text.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+                remind0date.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+              break;
+            case 1:
+                remind1.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+                remind1title.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+                remind1text.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+                remind1date.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+              break;
+            case 2:
+                remind2.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+                remind2title.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+                remind2text.addMouseListener(new MouseAdapter() {
+                @Override    
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+                remind2date.addMouseListener(new MouseAdapter() {
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+              break;
+            case 3:
+                remind3.addMouseListener(new MouseAdapter() {
+                @Override    
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+                remind3title.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+                remind3text.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+                remind3date.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    System.out.println(""+id);
+                }
+                });
+              break;
+            default:
+                break;
+        }
+    }
     
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -655,17 +820,17 @@ public class Home extends javax.swing.JFrame {
         jPanel4 = new javax.swing.JPanel();
         share0panel = new javax.swing.JPanel();
         jScrollPane10 = new javax.swing.JScrollPane();
-        shareTextArea1 = new javax.swing.JTextArea();
-        jTextField2 = new javax.swing.JTextField();
+        shared0ReminderDesc = new javax.swing.JTextArea();
+        shared0ReminderTitle = new javax.swing.JTextField();
         jButton10 = new javax.swing.JButton();
-        share3panel = new javax.swing.JPanel();
+        share2panel = new javax.swing.JPanel();
         jScrollPane14 = new javax.swing.JScrollPane();
-        shareTextArea3 = new javax.swing.JTextArea();
-        jTextField10 = new javax.swing.JTextField();
+        shared2ReminderDesc = new javax.swing.JTextArea();
+        shared2ReminderTitle = new javax.swing.JTextField();
         share1panel = new javax.swing.JPanel();
         jScrollPane15 = new javax.swing.JScrollPane();
-        shareTextArea2 = new javax.swing.JTextArea();
-        jTextField11 = new javax.swing.JTextField();
+        shared1ReminderDesc = new javax.swing.JTextArea();
+        shared1ReminderTitle = new javax.swing.JTextField();
         jSeparator2 = new javax.swing.JSeparator();
         jLabel138 = new javax.swing.JLabel();
 
@@ -681,28 +846,36 @@ public class Home extends javax.swing.JFrame {
         motiPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         day1icon.setForeground(new java.awt.Color(255, 255, 255));
-        day1icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Rain_49px.png"))); // NOI18N
-        motiPanel.add(day1icon, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 60, -1, -1));
+        day1icon.setMaximumSize(new java.awt.Dimension(49, 49));
+        day1icon.setMinimumSize(new java.awt.Dimension(49, 49));
+        day1icon.setPreferredSize(new java.awt.Dimension(49, 49));
+        motiPanel.add(day1icon, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 60, -1, -1));
 
         day0name.setFont(new java.awt.Font("Calibri", 0, 24)); // NOI18N
         day0name.setForeground(new java.awt.Color(255, 255, 255));
         motiPanel.add(day0name, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 30, -1, -1));
 
-        day2icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Partly Cloudy Rain_49px.png"))); // NOI18N
+        day2icon.setMaximumSize(new java.awt.Dimension(49, 49));
+        day2icon.setMinimumSize(new java.awt.Dimension(49, 49));
+        day2icon.setPreferredSize(new java.awt.Dimension(49, 49));
         motiPanel.add(day2icon, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 60, -1, -1));
 
         day2name.setFont(new java.awt.Font("Calibri", 0, 24)); // NOI18N
         day2name.setForeground(new java.awt.Color(255, 255, 255));
         motiPanel.add(day2name, new org.netbeans.lib.awtextra.AbsoluteConstraints(500, 30, -1, -1));
 
-        day3icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Fog Day_49px.png"))); // NOI18N
+        day3icon.setMaximumSize(new java.awt.Dimension(49, 49));
+        day3icon.setMinimumSize(new java.awt.Dimension(49, 49));
+        day3icon.setPreferredSize(new java.awt.Dimension(49, 49));
         motiPanel.add(day3icon, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 60, 50, -1));
 
         day3name.setFont(new java.awt.Font("Calibri", 0, 24)); // NOI18N
         day3name.setForeground(new java.awt.Color(255, 255, 255));
         motiPanel.add(day3name, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 30, -1, -1));
 
-        day4icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/bore_me_shi.png"))); // NOI18N
+        day4icon.setMaximumSize(new java.awt.Dimension(49, 49));
+        day4icon.setMinimumSize(new java.awt.Dimension(49, 49));
+        day4icon.setPreferredSize(new java.awt.Dimension(49, 49));
         motiPanel.add(day4icon, new org.netbeans.lib.awtextra.AbsoluteConstraints(800, 60, -1, 50));
 
         day4name.setFont(new java.awt.Font("Calibri", 0, 24)); // NOI18N
@@ -726,9 +899,11 @@ public class Home extends javax.swing.JFrame {
 
         day1name.setFont(new java.awt.Font("Calibri", 0, 24)); // NOI18N
         day1name.setForeground(new java.awt.Color(255, 255, 255));
-        motiPanel.add(day1name, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 30, -1, -1));
+        motiPanel.add(day1name, new org.netbeans.lib.awtextra.AbsoluteConstraints(360, 30, -1, -1));
 
-        day0icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Sun_49px.png"))); // NOI18N
+        day0icon.setMaximumSize(new java.awt.Dimension(49, 49));
+        day0icon.setMinimumSize(new java.awt.Dimension(49, 49));
+        day0icon.setPreferredSize(new java.awt.Dimension(49, 49));
         motiPanel.add(day0icon, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 60, -1, -1));
 
         day4min.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
@@ -749,11 +924,11 @@ public class Home extends javax.swing.JFrame {
 
         day1min.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day1min.setForeground(new java.awt.Color(255, 255, 255));
-        motiPanel.add(day1min, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 110, -1, 20));
+        motiPanel.add(day1min, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 110, -1, 20));
 
         day1max.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day1max.setForeground(new java.awt.Color(255, 255, 255));
-        motiPanel.add(day1max, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 130, -1, -1));
+        motiPanel.add(day1max, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 130, -1, -1));
 
         day0min.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day0min.setForeground(new java.awt.Color(255, 255, 255));
@@ -762,8 +937,6 @@ public class Home extends javax.swing.JFrame {
         day0max.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
         day0max.setForeground(new java.awt.Color(255, 255, 255));
         motiPanel.add(day0max, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 130, -1, -1));
-
-        todayIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Partly Cloudy Day_49px.png"))); // NOI18N
         motiPanel.add(todayIcon, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 70, -1, -1));
 
         refreshButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Refresh_25px.png"))); // NOI18N
@@ -788,7 +961,9 @@ public class Home extends javax.swing.JFrame {
         day5name.setForeground(new java.awt.Color(255, 255, 255));
         motiPanel.add(day5name, new org.netbeans.lib.awtextra.AbsoluteConstraints(910, 30, -1, -1));
 
-        day5icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/Cloud_49px.png"))); // NOI18N
+        day5icon.setMaximumSize(new java.awt.Dimension(49, 49));
+        day5icon.setMinimumSize(new java.awt.Dimension(49, 49));
+        day5icon.setPreferredSize(new java.awt.Dimension(49, 49));
         motiPanel.add(day5icon, new org.netbeans.lib.awtextra.AbsoluteConstraints(930, 60, -1, -1));
 
         day5max.setFont(new java.awt.Font("Calibri", 0, 14)); // NOI18N
@@ -801,7 +976,7 @@ public class Home extends javax.swing.JFrame {
 
         todayDay.setFont(new java.awt.Font("Calibri", 1, 16)); // NOI18N
         todayDay.setForeground(new java.awt.Color(255, 255, 255));
-        motiPanel.add(todayDay, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 130, -1, -1));
+        motiPanel.add(todayDay, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 130, -1, -1));
 
         jPanel12.add(motiPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 540, 1040, 170));
 
@@ -1125,6 +1300,7 @@ public class Home extends javax.swing.JFrame {
         remanderPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         remind0.setBorder(javax.swing.BorderFactory.createTitledBorder(""));
+        remind0.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         remind0.setOpaque(false);
         remind0.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
@@ -1137,7 +1313,7 @@ public class Home extends javax.swing.JFrame {
         remind0text.setForeground(new java.awt.Color(255, 255, 255));
         remind0text.setLineWrap(true);
         remind0text.setRows(5);
-        remind0text.setText("Trajnimi do te behet ne Lipjane. Ne ora    13:00.");
+        remind0text.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jScrollPane3.setViewportView(remind0text);
         jScrollPane3.setOpaque(false);
         jScrollPane3.getViewport().setOpaque(false);
@@ -1155,10 +1331,10 @@ public class Home extends javax.swing.JFrame {
 
         remind0.add(jScrollPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 30, 260, 60));
 
+        remind0title.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         remind0title.setBackground(new java.awt.Color(0, 0, 0));
         remind0title.setFont(new java.awt.Font("Calibri", 0, 12)); // NOI18N
         remind0title.setForeground(new java.awt.Color(255, 255, 255));
-        remind0title.setText("Trajnime ne UBT Campus");
         remind0title.setBorder(null);
         remind0.add(remind0title, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 10, -1, -1));
         remind0title.setOpaque(false);
@@ -1169,9 +1345,9 @@ public class Home extends javax.swing.JFrame {
         remind0date.setBackground(new java.awt.Color(0, 0, 0));
         remind0date.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
         remind0date.setForeground(new java.awt.Color(255, 255, 255));
-        remind0date.setText("26.05.2017");
         remind0date.setBorder(null);
-        remind0.add(remind0date, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 90, -1, -1));
+        remind0date.setPreferredSize(new java.awt.Dimension(56, 14));
+        remind0.add(remind0date, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 90, -1, -1));
         remind0date.setOpaque(false);
         remind0date.setBackground(new Color(0, 0, 0, 0));
         remind0date.setEditable(false);
@@ -1202,30 +1378,39 @@ public class Home extends javax.swing.JFrame {
         jButton5.setContentAreaFilled(false);
         remanderPanel.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 640, -1, -1));
 
+        remind2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        remind2.setBackground(new java.awt.Color(204, 204, 204));
         remind2.setBorder(javax.swing.BorderFactory.createTitledBorder(""));
         remind2.setAlignmentX(0.0F);
         remind2.setAlignmentY(0.0F);
         remind2.setOpaque(false);
         remind2.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
+        remind2title.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         remind2title.setBackground(new java.awt.Color(0, 0, 0));
         remind2title.setFont(new java.awt.Font("Calibri", 0, 12)); // NOI18N
         remind2title.setForeground(new java.awt.Color(255, 255, 255));
-        remind2title.setText("Trajnime ne UBT Campus");
         remind2title.setBorder(null);
         remind2title.setCaretColor(new java.awt.Color(255, 255, 255));
+        remind2title.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                remind2titleActionPerformed(evt);
+            }
+        });
         remind2.add(remind2title, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 10, -1, -1));
         remind2title.setOpaque(false);
         remind2title.setBackground(new Color(0, 0, 0, 0));
         remind2title.setEditable(false);
         remind2title.setFocusable(false);
 
+        remind2date.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         remind2date.setBackground(new java.awt.Color(0, 0, 0));
         remind2date.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
         remind2date.setForeground(new java.awt.Color(255, 255, 255));
         remind2date.setText("26.05.2017");
         remind2date.setBorder(null);
-        remind2.add(remind2date, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 90, -1, -1));
+        remind2date.setPreferredSize(new java.awt.Dimension(56, 14));
+        remind2.add(remind2date, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 90, -1, -1));
         remind2date.setOpaque(false);
         remind2date.setBackground(new Color(0, 0, 0, 0));
         remind2date.setEditable(false);
@@ -1234,13 +1419,13 @@ public class Home extends javax.swing.JFrame {
         jScrollPane12.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         jScrollPane12.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
+        remind2text.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         remind2text.setBackground(new java.awt.Color(0, 0, 0));
         remind2text.setColumns(20);
         remind2text.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
         remind2text.setForeground(new java.awt.Color(255, 255, 255));
         remind2text.setLineWrap(true);
         remind2text.setRows(5);
-        remind2text.setText("Trajnimi do te behet ne Lipjane. Ne ora    13:00.");
         jScrollPane12.setViewportView(remind2text);
         jScrollPane12.setOpaque(false);
         jScrollPane12.getViewport().setOpaque(false);
@@ -1262,16 +1447,17 @@ public class Home extends javax.swing.JFrame {
         remind2.setBackground(new Color(1.0f,1.0f,1.0f,0.5f));
         remind2.setForeground(new Color(01.0f,1.0f,1.0f,0.5f));
 
+        remind3.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         remind3.setBorder(javax.swing.BorderFactory.createTitledBorder(""));
         remind3.setAlignmentX(0.0F);
         remind3.setAlignmentY(0.0F);
         remind3.setOpaque(false);
         remind3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
+        remind3title.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         remind3title.setBackground(new java.awt.Color(0, 0, 0));
         remind3title.setFont(new java.awt.Font("Calibri", 0, 12)); // NOI18N
         remind3title.setForeground(new java.awt.Color(255, 255, 255));
-        remind3title.setText("Trajnime ne UBT Campus");
         remind3title.setBorder(null);
         remind3title.setCaretColor(new java.awt.Color(255, 255, 255));
         remind3.add(remind3title, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 10, -1, -1));
@@ -1280,12 +1466,13 @@ public class Home extends javax.swing.JFrame {
         remind3title.setEditable(false);
         remind3title.setFocusable(false);
 
+        remind3date.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         remind3date.setBackground(new java.awt.Color(0, 0, 0));
         remind3date.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
         remind3date.setForeground(new java.awt.Color(255, 255, 255));
-        remind3date.setText("26.05.2017");
         remind3date.setBorder(null);
-        remind3.add(remind3date, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 90, -1, -1));
+        remind3date.setPreferredSize(new java.awt.Dimension(56, 14));
+        remind3.add(remind3date, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 90, -1, -1));
         remind3date.setOpaque(false);
         remind3date.setBackground(new Color(0, 0, 0, 0));
         remind3date.setEditable(false);
@@ -1294,13 +1481,13 @@ public class Home extends javax.swing.JFrame {
         jScrollPane13.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         jScrollPane13.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
+        remind3text.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         remind3text.setBackground(new java.awt.Color(0, 0, 0));
         remind3text.setColumns(20);
         remind3text.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
         remind3text.setForeground(new java.awt.Color(255, 255, 255));
         remind3text.setLineWrap(true);
         remind3text.setRows(5);
-        remind3text.setText("Trajnimi do te behet ne Lipjane. Ne ora    13:00.");
         jScrollPane13.setViewportView(remind3text);
         jScrollPane13.setOpaque(false);
         jScrollPane13.getViewport().setOpaque(false);
@@ -1322,16 +1509,17 @@ public class Home extends javax.swing.JFrame {
         remind3.setBackground(new Color(1.0f,1.0f,1.0f,0.5f));
         remind3.setForeground(new Color(1.0f,1.0f,1.0f,0.5f));
 
+        remind1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         remind1.setBorder(javax.swing.BorderFactory.createTitledBorder(""));
         remind1.setAlignmentX(0.0F);
         remind1.setAlignmentY(0.0F);
         remind1.setOpaque(false);
         remind1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
+        remind1title.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         remind1title.setBackground(new java.awt.Color(0, 0, 0));
         remind1title.setFont(new java.awt.Font("Calibri", 0, 12)); // NOI18N
         remind1title.setForeground(new java.awt.Color(255, 255, 255));
-        remind1title.setText("Trajnime ne UBT Campus");
         remind1title.setBorder(null);
         remind1.add(remind1title, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 10, -1, -1));
         remind1title.setOpaque(false);
@@ -1339,12 +1527,13 @@ public class Home extends javax.swing.JFrame {
         remind1title.setEditable(false);
         remind1title.setFocusable(false);
 
+        remind1date.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         remind1date.setBackground(new java.awt.Color(0, 0, 0));
         remind1date.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
         remind1date.setForeground(new java.awt.Color(255, 255, 255));
-        remind1date.setText("26.05.2017");
         remind1date.setBorder(null);
-        remind1.add(remind1date, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 90, -1, -1));
+        remind1date.setPreferredSize(new java.awt.Dimension(56, 14));
+        remind1.add(remind1date, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 90, -1, -1));
         remind1date.setOpaque(false);
         remind1date.setBackground(new Color(0, 0, 0, 0));
         remind1date.setEditable(false);
@@ -1353,13 +1542,13 @@ public class Home extends javax.swing.JFrame {
         jScrollPane11.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         jScrollPane11.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
+        remind1text.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         remind1text.setBackground(new java.awt.Color(0, 0, 0));
         remind1text.setColumns(20);
         remind1text.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
         remind1text.setForeground(new java.awt.Color(255, 255, 255));
         remind1text.setLineWrap(true);
         remind1text.setRows(5);
-        remind1text.setText("Trajnimi do te behet ne Lipjane. Ne ora    13:00.");
         jScrollPane11.setViewportView(remind1text);
         jScrollPane11.setOpaque(false);
         jScrollPane11.getViewport().setOpaque(false);
@@ -1383,6 +1572,7 @@ public class Home extends javax.swing.JFrame {
 
         jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/More_30px.png"))); // NOI18N
         jButton2.setBorder(javax.swing.BorderFactory.createTitledBorder(""));
+        jButton2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         remanderPanel.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 550, -1, 20));
         jButton2.setOpaque(false);
         jButton2.setBackground(new Color(0, 0, 0, 20));
@@ -1409,40 +1599,40 @@ public class Home extends javax.swing.JFrame {
         jScrollPane10.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         jScrollPane10.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
-        shareTextArea1.setBackground(new java.awt.Color(0, 0, 0));
-        shareTextArea1.setColumns(20);
-        shareTextArea1.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
-        shareTextArea1.setForeground(new java.awt.Color(255, 255, 255));
-        shareTextArea1.setLineWrap(true);
-        shareTextArea1.setRows(5);
-        shareTextArea1.setText("Takime ne ora 13:00 ne UBT\nCAMPUS");
-        jScrollPane10.setViewportView(shareTextArea1);
+        shared0ReminderDesc.setBackground(new java.awt.Color(0, 0, 0));
+        shared0ReminderDesc.setColumns(20);
+        shared0ReminderDesc.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
+        shared0ReminderDesc.setForeground(new java.awt.Color(255, 255, 255));
+        shared0ReminderDesc.setLineWrap(true);
+        shared0ReminderDesc.setRows(5);
+        jScrollPane10.setViewportView(shared0ReminderDesc);
         jScrollPane10.setOpaque(false);
         jScrollPane10.getViewport().setOpaque(false);
         jScrollPane10.setBorder(null);
         jScrollPane10.setViewportBorder(null);
 
-        shareTextArea1.setBorder(null);
-        shareTextArea1.setBackground(new Color(0, 0, 0, 0));
+        shared0ReminderDesc.setBorder(null);
+        shared0ReminderDesc.setBackground(new Color(0, 0, 0, 0));
 
-        shareTextArea1.setWrapStyleWord(true);
-        shareTextArea1.setLineWrap(true);
-        shareTextArea1.setOpaque(false);
-        shareTextArea1.setEditable(false);
-        shareTextArea1.setFocusable(false);
+        shared0ReminderDesc.setWrapStyleWord(true);
+        shared0ReminderDesc.setLineWrap(true);
+        shared0ReminderDesc.setOpaque(false);
+        shared0ReminderDesc.setEditable(false);
+        shared0ReminderDesc.setFocusable(false);
 
         share0panel.add(jScrollPane10, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, 190, 60));
 
-        jTextField2.setBackground(new java.awt.Color(0, 0, 0));
-        jTextField2.setFont(new java.awt.Font("Calibri", 1, 12)); // NOI18N
-        jTextField2.setForeground(new java.awt.Color(255, 255, 255));
-        jTextField2.setText("Laura Berisha");
-        jTextField2.setBorder(null);
-        share0panel.add(jTextField2, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 10, -1, -1));
-        jTextField2.setOpaque(false);
-        jTextField2.setBackground(new Color(0, 0, 0, 0));
-        jTextField2.setEditable(false);
-        jTextField2.setFocusable(false);
+        shared0ReminderTitle.setBackground(new java.awt.Color(0, 0, 0));
+        shared0ReminderTitle.setFont(new java.awt.Font("Calibri", 1, 12)); // NOI18N
+        shared0ReminderTitle.setForeground(new java.awt.Color(255, 255, 255));
+        shared0ReminderTitle.setBorder(null);
+        share0panel.add(shared0ReminderTitle, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 10, -1, -1));
+        shared0ReminderTitle.setOpaque(false);
+        shared0ReminderTitle.setBackground(new Color(0, 0, 0, 0));
+        shared0ReminderTitle.setEditable(false);
+        shared0ReminderTitle.setFocusable(false);
+
+        share0panel.setVisible(false);
 
         jPanel4.add(share0panel, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 10, 210, 100));
         share0panel.setBackground(new Color(1.0f,1.0f,1.0f,0.5f));
@@ -1460,53 +1650,53 @@ public class Home extends javax.swing.JFrame {
         jButton10.setOpaque(false);
         jButton10.setBackground(new Color(0, 0, 0, 150));
 
-        share3panel.setBackground(new java.awt.Color(204, 204, 204));
-        share3panel.setBorder(javax.swing.BorderFactory.createTitledBorder(""));
-        share3panel.setForeground(new java.awt.Color(255, 255, 255));
-        share3panel.setOpaque(false);
-        share3panel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+        share2panel.setBackground(new java.awt.Color(204, 204, 204));
+        share2panel.setBorder(javax.swing.BorderFactory.createTitledBorder(""));
+        share2panel.setForeground(new java.awt.Color(255, 255, 255));
+        share2panel.setOpaque(false);
+        share2panel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jScrollPane14.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         jScrollPane14.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
-        shareTextArea3.setBackground(new java.awt.Color(0, 0, 0));
-        shareTextArea3.setColumns(20);
-        shareTextArea3.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
-        shareTextArea3.setForeground(new java.awt.Color(255, 255, 255));
-        shareTextArea3.setLineWrap(true);
-        shareTextArea3.setRows(5);
-        shareTextArea3.setText("Takime ne ora 13:00 ne UBT\nCAMPUS");
-        jScrollPane14.setViewportView(shareTextArea3);
+        shared2ReminderDesc.setBackground(new java.awt.Color(0, 0, 0));
+        shared2ReminderDesc.setColumns(20);
+        shared2ReminderDesc.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
+        shared2ReminderDesc.setForeground(new java.awt.Color(255, 255, 255));
+        shared2ReminderDesc.setLineWrap(true);
+        shared2ReminderDesc.setRows(5);
+        jScrollPane14.setViewportView(shared2ReminderDesc);
         jScrollPane14.setOpaque(false);
         jScrollPane14.getViewport().setOpaque(false);
         jScrollPane14.setBorder(null);
         jScrollPane14.setViewportBorder(null);
 
-        shareTextArea3.setBorder(null);
-        shareTextArea3.setBackground(new Color(0, 0, 0, 0));
+        shared2ReminderDesc.setBorder(null);
+        shared2ReminderDesc.setBackground(new Color(0, 0, 0, 0));
 
-        shareTextArea3.setWrapStyleWord(true);
-        shareTextArea3.setLineWrap(true);
-        shareTextArea3.setOpaque(false);
-        shareTextArea3.setEditable(false);
-        shareTextArea3.setFocusable(false);
+        shared2ReminderDesc.setWrapStyleWord(true);
+        shared2ReminderDesc.setLineWrap(true);
+        shared2ReminderDesc.setOpaque(false);
+        shared2ReminderDesc.setEditable(false);
+        shared2ReminderDesc.setFocusable(false);
 
-        share3panel.add(jScrollPane14, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, 190, 60));
+        share2panel.add(jScrollPane14, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, 190, 60));
 
-        jTextField10.setBackground(new java.awt.Color(0, 0, 0));
-        jTextField10.setFont(new java.awt.Font("Calibri", 1, 12)); // NOI18N
-        jTextField10.setForeground(new java.awt.Color(255, 255, 255));
-        jTextField10.setText("Laura Berisha");
-        jTextField10.setBorder(null);
-        share3panel.add(jTextField10, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 10, -1, -1));
-        jTextField10.setOpaque(false);
-        jTextField10.setBackground(new Color(0, 0, 0, 0));
-        jTextField10.setEditable(false);
-        jTextField10.setFocusable(false);
+        shared2ReminderTitle.setBackground(new java.awt.Color(0, 0, 0));
+        shared2ReminderTitle.setFont(new java.awt.Font("Calibri", 1, 12)); // NOI18N
+        shared2ReminderTitle.setForeground(new java.awt.Color(255, 255, 255));
+        shared2ReminderTitle.setBorder(null);
+        share2panel.add(shared2ReminderTitle, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 10, -1, -1));
+        shared2ReminderTitle.setOpaque(false);
+        shared2ReminderTitle.setBackground(new Color(0, 0, 0, 0));
+        shared2ReminderTitle.setEditable(false);
+        shared2ReminderTitle.setFocusable(false);
 
-        jPanel4.add(share3panel, new org.netbeans.lib.awtextra.AbsoluteConstraints(550, 10, 210, 100));
-        share3panel.setBackground(new Color(1.0f,1.0f,1.0f,0.5f));
-        share3panel.setForeground(new Color(1.0f,1.0f,1.0f,0.5f));
+        share2panel.setVisible(false);
+
+        jPanel4.add(share2panel, new org.netbeans.lib.awtextra.AbsoluteConstraints(550, 10, 210, 100));
+        share2panel.setBackground(new Color(1.0f,1.0f,1.0f,0.5f));
+        share2panel.setForeground(new Color(1.0f,1.0f,1.0f,0.5f));
 
         share1panel.setBackground(new java.awt.Color(204, 204, 204));
         share1panel.setBorder(javax.swing.BorderFactory.createTitledBorder(""));
@@ -1517,40 +1707,40 @@ public class Home extends javax.swing.JFrame {
         jScrollPane15.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         jScrollPane15.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
-        shareTextArea2.setBackground(new java.awt.Color(0, 0, 0));
-        shareTextArea2.setColumns(20);
-        shareTextArea2.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
-        shareTextArea2.setForeground(new java.awt.Color(255, 255, 255));
-        shareTextArea2.setLineWrap(true);
-        shareTextArea2.setRows(5);
-        shareTextArea2.setText("Takime ne ora 13:00 ne UBT\nCAMPUS");
-        jScrollPane15.setViewportView(shareTextArea2);
+        shared1ReminderDesc.setBackground(new java.awt.Color(0, 0, 0));
+        shared1ReminderDesc.setColumns(20);
+        shared1ReminderDesc.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
+        shared1ReminderDesc.setForeground(new java.awt.Color(255, 255, 255));
+        shared1ReminderDesc.setLineWrap(true);
+        shared1ReminderDesc.setRows(5);
+        jScrollPane15.setViewportView(shared1ReminderDesc);
         jScrollPane15.setOpaque(false);
         jScrollPane15.getViewport().setOpaque(false);
         jScrollPane15.setBorder(null);
         jScrollPane15.setViewportBorder(null);
 
-        shareTextArea2.setBorder(null);
-        shareTextArea2.setBackground(new Color(0, 0, 0, 0));
+        shared1ReminderDesc.setBorder(null);
+        shared1ReminderDesc.setBackground(new Color(0, 0, 0, 0));
 
-        shareTextArea2.setWrapStyleWord(true);
-        shareTextArea2.setLineWrap(true);
-        shareTextArea2.setOpaque(false);
-        shareTextArea2.setEditable(false);
-        shareTextArea2.setFocusable(false);
+        shared1ReminderDesc.setWrapStyleWord(true);
+        shared1ReminderDesc.setLineWrap(true);
+        shared1ReminderDesc.setOpaque(false);
+        shared1ReminderDesc.setEditable(false);
+        shared1ReminderDesc.setFocusable(false);
 
         share1panel.add(jScrollPane15, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, 190, 60));
 
-        jTextField11.setBackground(new java.awt.Color(0, 0, 0));
-        jTextField11.setFont(new java.awt.Font("Calibri", 1, 12)); // NOI18N
-        jTextField11.setForeground(new java.awt.Color(255, 255, 255));
-        jTextField11.setText("Laura Berisha");
-        jTextField11.setBorder(null);
-        share1panel.add(jTextField11, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 10, -1, -1));
-        jTextField11.setOpaque(false);
-        jTextField11.setBackground(new Color(0, 0, 0, 0));
-        jTextField11.setEditable(false);
-        jTextField11.setFocusable(false);
+        shared1ReminderTitle.setBackground(new java.awt.Color(0, 0, 0));
+        shared1ReminderTitle.setFont(new java.awt.Font("Calibri", 1, 12)); // NOI18N
+        shared1ReminderTitle.setForeground(new java.awt.Color(255, 255, 255));
+        shared1ReminderTitle.setBorder(null);
+        share1panel.add(shared1ReminderTitle, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 10, -1, -1));
+        shared1ReminderTitle.setOpaque(false);
+        shared1ReminderTitle.setBackground(new Color(0, 0, 0, 0));
+        shared1ReminderTitle.setEditable(false);
+        shared1ReminderTitle.setFocusable(false);
+
+        share1panel.setVisible(false);
 
         jPanel4.add(share1panel, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 10, 210, 100));
         share1panel.setBackground(new Color(1.0f,1.0f,1.0f,0.5f));
@@ -1596,6 +1786,10 @@ public class Home extends javax.swing.JFrame {
         
         this.dispose();
     }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void remind2titleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_remind2titleActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_remind2titleActionPerformed
 
 
     public static void main(String args[]) {
@@ -1706,9 +1900,6 @@ public class Home extends javax.swing.JFrame {
     private javax.swing.JTextArea jTextArea7;
     private javax.swing.JTextArea jTextArea8;
     private javax.swing.JTextArea jTextArea9;
-    private javax.swing.JTextField jTextField10;
-    private javax.swing.JTextField jTextField11;
-    private javax.swing.JTextField jTextField2;
     private javax.swing.JPanel kosovapressPanel;
     private javax.swing.JPanel lajminetPanel;
     private javax.swing.JPanel motiPanel;
@@ -1733,10 +1924,13 @@ public class Home extends javax.swing.JFrame {
     private javax.swing.JTextField remind3title;
     private javax.swing.JPanel share0panel;
     private javax.swing.JPanel share1panel;
-    private javax.swing.JPanel share3panel;
-    private javax.swing.JTextArea shareTextArea1;
-    private javax.swing.JTextArea shareTextArea2;
-    private javax.swing.JTextArea shareTextArea3;
+    private javax.swing.JPanel share2panel;
+    private javax.swing.JTextArea shared0ReminderDesc;
+    private javax.swing.JTextField shared0ReminderTitle;
+    private javax.swing.JTextArea shared1ReminderDesc;
+    private javax.swing.JTextField shared1ReminderTitle;
+    private javax.swing.JTextArea shared2ReminderDesc;
+    private javax.swing.JTextField shared2ReminderTitle;
     private javax.swing.JPanel telegrafPanel;
     private javax.swing.JLabel todayDay;
     private javax.swing.JLabel todayIcon;

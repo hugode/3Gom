@@ -374,7 +374,10 @@ public class AddReg extends javax.swing.JFrame {
                 r.setRemindersDate(date);
                 r.setRemindersTitle(reminderTitle);
                 r.setRemindersDescription(reminderDesc);
-                r.setRemindersShared(share);
+                if(share)
+                    r.setRemindersShared(true);
+                else
+                   r.setRemindersShared(false); 
                 if(isset){
                 try{
                     temp = Short.parseShort(reminderTemp);
@@ -387,6 +390,9 @@ public class AddReg extends javax.swing.JFrame {
                 r.setRemindersHigher(temp);
                 r.setRemindersIsset(true);
                 }
+                    
+                if(!isset)
+                    r.setRemindersIsset(false);
                 
                 r.setRemindersUser(user.getUsername());
                

@@ -36,7 +36,7 @@ public class RemindersRepository extends EntityManagerClass{
         Query q = em.createQuery("SELECT r FROM Reminders r WHERE "
                 + "r.remindersUser=:u AND "
                 + "r.remindersDate>=:d "
-                + "ORDER BY r.remindersDate ASC").setMaxResults(10);
+                + "ORDER BY r.remindersDate ASC").setMaxResults(4);
         q.setParameter("u", u.getUsername());
         q.setParameter("d", d);
         try{
@@ -152,6 +152,25 @@ public class RemindersRepository extends EntityManagerClass{
         }catch(Exception e){
             throw new Exceptions(e.getMessage());
         }
+    }
+    
+    public List<Reminders> getSharedReminders(Users u) throws Exceptions{
+        Date d = new Date();
+        Query q = em.createQuery("SELECT r FROM Reminders r WHERE "
+                + "r.remindersUser!=:u AND "
+                + "r.remindersDate>=:d AND "
+                + "r.remindersShared=:sh "
+                + "ORDER BY r.remindersDate ASC").setMaxResults(3);
+        q.setParameter("u", u.getUsername());
+        q.setParameter("d", d);
+        q.setParameter("sh", true);
+        try{
+        List<Reminders> reminders = (List<Reminders>) q.getResultList();
+        return reminders;
+        }catch(NoResultException e){
+           throw new Exceptions("RemindersRepository => Nuk ka shared remininders: "+e.getMessage());
+        }
+        
     }
     
 }
